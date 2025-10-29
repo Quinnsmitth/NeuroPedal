@@ -19,4 +19,4 @@ def run_training():
     return model, losses
 
 model, losses = run_training()
-plotLoss(losses)
+#plotLoss(losses)
