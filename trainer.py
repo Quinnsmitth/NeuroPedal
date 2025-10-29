@@ -38,9 +38,9 @@ def train_model(clean_dir, dist_dir, chunk_size=44100, batch_size=8, epochs=5, l
             all_losses.append(loss.item())
             print(f"Batch {i+1}/{len(dataloader)}, Loss: {loss.item():.6f}")
 
-    # Save trained model
-    torch.save(model.state_dict(), "TrainedWeights/wavenet_weights.pth")
+    torch.save(model.state_dict(), "wavenet_weights.pth")
     print("Model saved as wavenet_weights.pth")
+
 
     return model, all_losses
 
