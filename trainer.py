@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataset import GuitarPedalDataset
 from model import WaveNet  # explicitly import WaveNet
+from fileUtil import get_file_name
 
 def train_model(clean_dir, dist_dir, chunk_size=44100, batch_size=8, epochs=5, lr=1e-3, device=None):
     # Use GPU if available
@@ -37,9 +38,9 @@ def train_model(clean_dir, dist_dir, chunk_size=44100, batch_size=8, epochs=5, l
 
             all_losses.append(loss.item())
             print(f"Batch {i+1}/{len(dataloader)}, Loss: {loss.item():.6f}")
-
-    torch.save(model.state_dict(), "wavenet_weights.pth")
-    print("Model saved as wavenet_weights.pth")
+    file_name = get_file_name("weights/", "model", ".pth")
+    torch.save(model.state_dict(), file_name)
+    print(f"Model saved as {file_name}")
 
 
     return model, all_losses
