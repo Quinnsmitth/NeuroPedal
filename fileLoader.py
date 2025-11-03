@@ -16,8 +16,13 @@ def getDataDistorted():
             return data_path
     raise FileNotFoundError("No valid data path found in possible_data list.")
 
-def getData(type="clean"):
-    possible_data = [f"Users/quinnsmith/Desktop/guitar_data/{type}",f"/Volumes/PortableSSD/guitar_data/{type}"]
+def getData(type):
+    if type not in ['clean','dist']:
+        raise ValueError("type must be 'clean' or 'dist'")
+    
+    possible_data = [f"/Users/quinnsmith/Desktop/guitar_data/{type}",
+                     f"/Volumes/PortableSSD/guitar_data/{type}"]
+    
     for data_path in possible_data:
        if os.path.isdir(data_path):
               return data_path
