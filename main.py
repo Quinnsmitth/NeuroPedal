@@ -17,6 +17,5 @@ def run_training():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, losses = train_model(clean_dir, dist_dir, chunk_size=44100, batch_size=8, epochs=5, device=device)
     return model, losses
-
 model, losses = run_training()
 plotLoss(losses)
