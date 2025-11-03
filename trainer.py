@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from dataset import GuitarPedalDataset
 from model import WaveNet  # explicitly import WaveNet
 from fileUtil import get_file_name
-
+from fileLoader import getData
 def train_model(clean_dir, dist_dir, chunk_size=44100, batch_size=8, epochs=5, lr=1e-3, device=None):
     # Use GPU if available
     if device is None:
@@ -47,6 +47,6 @@ def train_model(clean_dir, dist_dir, chunk_size=44100, batch_size=8, epochs=5, l
 
 # Example usage:
 if __name__ == "__main__":
-    clean_dir = "/Users/quinnsmith/Desktop/guitar_data/clean"
-    dist_dir = "/Users/quinnsmith/Desktop/guitar_data/dist"
+    clean_dir = getData("clean")
+    dist_dir = getData("dist")
     model, losses = train_model(clean_dir, dist_dir)

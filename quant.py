@@ -1,8 +1,9 @@
 import os
 import torchaudio
 from dataset import GuitarPedalDataset
-clean_dir = "/Users/quinnsmith/Desktop/guitar_data/clean"
-dist_dir = "/Users/quinnsmith/Desktop/guitar_data/dist"
+from fileLoader import getData
+clean_dir = getData("clean")
+dist_dir = getData("dist")
 
 def total_audio_duration(directory):
     total_samples = 0
@@ -22,6 +23,6 @@ def total_audio_duration(directory):
     print(f"Total duration: {total_duration/60:.2f} minutes ({total_duration:.2f} seconds)")
 
 # Example usage:
-total_audio_duration("/Users/quinnsmith/Desktop/guitar_data/clean")
+total_audio_duration(clean_dir)
 print(GuitarPedalDataset(clean_dir=clean_dir, dist_dir=dist_dir, chunk_size=44100))
 
