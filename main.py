@@ -1,9 +1,9 @@
 import torch
 from trainer import train_model
 import matplotlib.pyplot as plt
-
-clean_dir = "/Users/quinnsmith/Desktop/guitar_data/clean"
-dist_dir = "/Users/quinnsmith/Desktop/guitar_data/dist"
+from fileLoader import getData
+clean_dir = getData("clean")
+dist_dir = getData("dist")
 
 def plotLoss(losses):
     plt.figure(figsize=(10,4))
