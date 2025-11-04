@@ -1,0 +1,11 @@
+#Initalizing Plug In to best fit the sound of. TS-9
+def initialize_plugin(plugin):
+    plugin.parameters['hq'].value = True #Use highquality Over Sampling
+    plugin.parameters['od_power'].value = True # Make sure the circut is active
+    plugin.parameters['od_attack'].value = "A1" # Best  Tube-Style for clipping
+    plugin.parameters['input_gain'].value = 0.0 # Unity Gain - no prepedal boosting
+    plugin.parameters['output_gain'].value = 0.0 # Unity Gain - no postpedal boosting
+    plugin.parameters['mix'].value = 100.0 # Full Effected Signal
+    plugin.parameters['noise_gate'].value = 0.0 # Noise Gate Off
+    plugin.parameters['bypass'].value = False  # Bypass Off - Pedal is Active
+    return plugin
