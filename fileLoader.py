@@ -19,8 +19,8 @@ def getDataDistorted():
 
 def getData(type):
     # for classification all files go in 'dist'
-    if type not in ['clean','dist']:
-        raise ValueError("type must be 'clean' or 'dist'")
+    if type not in ['clean','dist','split']:
+        raise ValueError("type must be 'clean','dist', or 'split'")
     
     possible_data = [f"/Users/quinnsmith/Desktop/guitar_data/{type}",
                      f"/Volumes/PortableSSD/guitar_data/{type}"]
