@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
-
+# Define a ResNet-based model for regression of drive and tone parameters
 class PedalResNet(nn.Module):
     def __init__(self):
         super(PedalResNet, self).__init__()

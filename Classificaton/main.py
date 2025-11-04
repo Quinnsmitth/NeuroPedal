@@ -2,12 +2,12 @@ import os
 from chunk import split_audio_file
 from train import train_model
 
-RAW_DATA_DIR = "/Volumes/PortableSSD/data/raw"
-SPLIT_DATA_DIR = "/Volumes/PortableSSD/data/split"
-CHUNK_DURATION = 5.0
+RAW_DATA_DIR = "/Volumes/PortableSSD/data/raw" # use file loader to set this path dynamically if needed
+SPLIT_DATA_DIR = "/Volumes/PortableSSD/data/split" # use file loader to set this path dynamically if needed
+CHUNK_DURATION = 5.0 # seconds
 EPOCHS = 20
 BATCH_SIZE = 8
-LEARNING_RATE = 1e-4
+LEARNING_RATE = .00001
 
 # Preprocess: split audio
 os.makedirs(SPLIT_DATA_DIR, exist_ok=True)

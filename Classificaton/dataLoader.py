@@ -22,15 +22,17 @@ class GuitarPedalDataset(Dataset):
 
         # Parse labels (supports ts9_driveX_toneY[_ZZZ].wav)
         parts = file_name.split('_')
+        # extracts drive and tone from filename
         drive = int(parts[1].replace('drive', ''))
         tone_part = parts[2].replace('tone', '')
+        #checks if there is an additional part after tone if so it removes it
         if '.' in tone_part:
             tone = int(tone_part.split('.')[0])
         else:
             tone = int(tone_part.split('_')[0])
         drive /= 10.0
         tone /= 10.0
-
+        # Apply any additional transforms to the spectrogram that have been done to the dataset
         if self.transform:
             mel_spec = self.transform(mel_spec)
 
