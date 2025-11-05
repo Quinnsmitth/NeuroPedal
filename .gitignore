@@ -1,5 +1,5 @@
 .gitconfig
 
-__pycache__/
+Classification/__pycache__/
 
 .DS_Store
