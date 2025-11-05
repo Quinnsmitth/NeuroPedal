@@ -1,7 +1,7 @@
 import os
 from chunk import split_audio_file
 from train import train_model
-from Classificaton.fileLoader import getData
+from src.Classificaton.fileLoader import getData
 
 RAW_DATA_DIR = getData("dist") # use file loader to set this path dynamically if needed
 SPLIT_DATA_DIR = getData("split") # use file loader to set this path dynamically if needed

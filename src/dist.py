@@ -2,7 +2,7 @@ from pedalboard import load_plugin
 from pedalboard.io import AudioFile
 import numpy as np
 import os
-from pedal_init import initialize_plugin
+from src.pedal_init import initialize_plugin
 # Load the plugin (must be a VST3, not VST2 / VST)
 plugin_path = "/Library/Audio/Plug-Ins/VST3/Audiority/Dr Drive.vst3"
 
