@@ -11,7 +11,3 @@ def initialize_plugin(plugin):
     plugin.parameters['noise_gate'].value = 0.0
     plugin.parameters['bypass'].value = False
     return plugin
-
-plugin_path = "/Library/Audio/Plug-Ins/VST3/Audiority/Dr Drive.vst3"
-plugin = load_plugin(plugin_path)
-print(plugin.parameters)
