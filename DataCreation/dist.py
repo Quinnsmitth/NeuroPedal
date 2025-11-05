@@ -33,7 +33,7 @@ for drive in np.linspace(0.0, 1.0, 10):
             effected = plugin(audio, samplerate)
 
             # Save to a new file
-            name = f"drive{drive:.1f}_tone{tone:.1f}_level{level:.1f}.wav"
+            name = f"drive{drive:.1f}_tone{tone:.1f}.wav"
             path = os.path.join(output_dir, name)
             with AudioFile(path, "w", samplerate, effected.shape[0]) as o:
                 o.write(effected)
