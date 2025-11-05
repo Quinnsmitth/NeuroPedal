@@ -1,3 +1,6 @@
+from pedalboard import load_plugin
+plugin_path = "/Library/Audio/Plug-Ins/VST3/Audiority/Dr Drive.vst3"
+
 #Initalizing Plug In to best fit the sound of. TS-9
 def initialize_plugin(plugin):
     plugin.parameters['hq'].value = True #Use highquality Over Sampling
@@ -10,3 +13,6 @@ def initialize_plugin(plugin):
     plugin.parameters['noise_gate'].value = 0.0 # Noise Gate Off
     plugin.parameters['bypass'].value = False  # Bypass Off - Pedal is Active
     return plugin
+
+plugin = initialize_plugin(load_plugin(plugin_path))
+print(plugin.parameters)
