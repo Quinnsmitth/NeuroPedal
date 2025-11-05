@@ -20,3 +20,4 @@ if __name__ == "__main__":
     Path("data/midi/clean").mkdir(parents=True, exist_ok=True)
     for i in range(100):
         create_midi(f"data/midi/clean/clean_{i}.mid")
+## Possible Harmonics, Chords, Scales, muted strum?
