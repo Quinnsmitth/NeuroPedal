@@ -11,27 +11,36 @@ root = load_config()
 midi_dir = root / "midi"
 midi_dir.mkdir(parents=True, exist_ok=True)
 
-print(f"🎼 Writing MIDI files to: {midi_dir}")
+print(f"Writing MIDI files to: {midi_dir}")
 
-def create_midi(filepath, program=24, length=8):
+def create_midi(filepath, program=24, length=16):
     mid = MidiFile()
     track = MidiTrack()
     mid.tracks.append(track)
 
     # Set guitar instrument (General MIDI Patch 24 = Nylon Guitar)
-    track.append(Message('program_change', program=program, time=0))
+    track.append(Message('control_change', control=0, value=0, time=0))  # CC0 Bank MSB = 0
+    track.append(Message('control_change', control=32, value=0, time=0))  # CC32 Bank LSB = 0
+    track.append(Message('program_change', program=27, time=0))  # GM 28 Electric Clean (0-based 27)
 
+
+    # Have to work out timing and chords for harmonic notes
     for _ in range(length):
         note = random.randint(50, 70)
         velocity = random.randint(60, 100)
         track.append(Message('note_on', note=note, velocity=velocity, time=0))
-        track.append(Message('note_off', note=note, velocity=velocity, time=480))
+        track.append(Message('note_on', note=note, velocity=velocity, time=1))
+        track.append(Message('note_on', note=note, velocity=velocity, time=2))
+        track.append(Message('note_on', note=note, velocity=velocity, time=3))
+        track.append(Message('note_on', note=note, velocity=velocity, time=4))
+        track.append(Message('note_on', note=note, velocity=velocity, time=5))
+        track.append(Message('note_off', note=note, velocity=velocity, time=200))
 
     mid.save(filepath)
 
 # Generate 20 test MIDI files
-for i in range(20):
+for i in range(10):
     f = midi_dir / f"riff_{i:03d}.mid"
     create_midi(f)
 
-print("✅ MIDI generation complete")
+print("MIDI generation complete")
