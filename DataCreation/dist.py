@@ -25,11 +25,9 @@ with AudioFile(input_file) as f: # Opens audio file located at input_file, Audio
 # Loop through parameter combinations
 for drive in np.linspace(0.0, 1.0, 10):
     for tone in np.linspace(0.0, 1.0, 10):
-        for level in np.linspace(0.0, 1.0, 5):
             # Set plugin parameters
             plugin.parameters["od_drive"] = drive
             plugin.parameters["od_bright"] = tone
-            plugin.parameters["od_level"] = level
 
             # Process the audio
             effected = plugin(audio, samplerate)

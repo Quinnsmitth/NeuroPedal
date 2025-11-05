@@ -6,6 +6,7 @@ def initialize_plugin(plugin):
     plugin.parameters['input_gain'].value = 0.0 # Unity Gain - no prepedal boosting
     plugin.parameters['output_gain'].value = 0.0 # Unity Gain - no postpedal boosting
     plugin.parameters['mix'].value = 100.0 # Full Effected Signal
+    plugin.parameters['od_level'].value = 0.5 # Use to set output level
     plugin.parameters['noise_gate'].value = 0.0 # Noise Gate Off
     plugin.parameters['bypass'].value = False  # Bypass Off - Pedal is Active
     return plugin
