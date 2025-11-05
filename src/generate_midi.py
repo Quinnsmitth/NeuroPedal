@@ -29,12 +29,12 @@ def create_midi(filepath, program=24, length=16):
         note = random.randint(50, 70)
         velocity = random.randint(60, 100)
         track.append(Message('note_on', note=note, velocity=velocity, time=0))
-        track.append(Message('note_on', note=note, velocity=velocity, time=1))
-        track.append(Message('note_on', note=note, velocity=velocity, time=2))
-        track.append(Message('note_on', note=note, velocity=velocity, time=3))
-        track.append(Message('note_on', note=note, velocity=velocity, time=4))
-        track.append(Message('note_on', note=note, velocity=velocity, time=5))
-        track.append(Message('note_off', note=note, velocity=velocity, time=200))
+        track.append(Message('note_on', note=note, velocity=velocity, time=100))
+        track.append(Message('note_on', note=note, velocity=velocity, time=200))
+        track.append(Message('note_on', note=note, velocity=velocity, time=300))
+        track.append(Message('note_on', note=note, velocity=velocity, time=400))
+        track.append(Message('note_on', note=note, velocity=velocity, time=500))
+        #track.append(Message('note_off', note=note, velocity=velocity, time=200))
 
     mid.save(filepath)
 

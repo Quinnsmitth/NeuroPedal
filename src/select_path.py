@@ -1,9 +1,16 @@
 # src/select_path.py
 """
-select_path.py
 -----------------------------------------
 Detects or asks for the user's data root directory
 (e.g., USB, external SSD, or local folder).
+
+USB Folder Setup:
+USB\
+    guitar_data\
+        clean\
+        distorted\
+        midi\
+        features\
 
 Creates a config.json file in the project root so
 other scripts can automatically find the correct base path.
@@ -40,11 +47,11 @@ def detect_default_paths():
 
 def select_data_root():
     """Find or ask for the base data folder."""
-    print("\n🔍 Searching for guitar_data folder...")
+    print("\nSearching for guitar_data folder...")
 
     for candidate in detect_default_paths():
         if candidate.exists():
-            print(f"✅ Found existing folder: {candidate}")
+            print(f"Found existing folder: {candidate}")
             return candidate
 
     # If not found, ask the user
@@ -61,7 +68,7 @@ def save_config(data_root: Path):
     config = {"data_root": str(data_root)}
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=2)
-    print(f"💾 Saved data path to {CONFIG_FILE}")
+    print(f"Saved data path to {CONFIG_FILE}")
 
 
 def load_config() -> Path:
@@ -79,4 +86,4 @@ def load_config() -> Path:
 if __name__ == "__main__":
     root = select_data_root()
     save_config(root)
-    print(f"🎸 Using data root: {root}")
+    print(f"Using data root: {root}")
