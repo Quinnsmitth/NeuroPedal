@@ -26,9 +26,8 @@ def detect_default_paths():
         for drive in "DEFGHIJKLMNOPQRSTUVWXYZ":
             guesses.append(Path(f"{drive}:/guitar_data"))
     elif system == "Darwin":  # macOS
-        guesses += [
-            Path("/Volumes/guitar_data"),          # external USB volume
-            Path("/Volumes/SSD/guitar_data"),      # common SSD setup
+        guesses += [          
+            Path("/Volumes/PortableSSD/guitar_data"),      # common SSD setup
             Path.home() / "Desktop/guitar_data"    # fallback local path
         ]
     else:  # Linux or others
