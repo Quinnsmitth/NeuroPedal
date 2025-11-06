@@ -4,7 +4,6 @@ from pathlib import Path
 from select_path import load_config
 
 root = load_config()
-
 midi_dir = root / "midi"
 wav_dir = root / "clean"
 wav_dir.mkdir(parents=True, exist_ok=True)
