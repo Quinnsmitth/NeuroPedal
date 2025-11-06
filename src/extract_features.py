@@ -4,9 +4,9 @@ import librosa
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from select_path import load_config   # <-- NEW
+from select_path import load_config   
 
-# Load the correct base folder (USB / SSD / Desktop / etc.)
+# Load the correct base folder (USB / SSD / Desktop)
 root = load_config()
 
 distorted_dir = root / "distorted"
@@ -41,4 +41,4 @@ df = pd.DataFrame(rows, columns=columns)
 # Save CSV
 df.to_csv(feature_file, index=False)
 
-print(f"✅ Features saved to {feature_file}")
+print(f"Features saved to {feature_file}")

@@ -1,9 +1,6 @@
 # src/select_path.py
 """
------------------------------------------
 Detects or asks for the user's data root directory
-(e.g., USB, external SSD, or local folder).
-
 USB Folder Setup:
 USB\
     guitar_data\
@@ -14,7 +11,6 @@ USB\
 
 Creates a config.json file in the project root so
 other scripts can automatically find the correct base path.
------------------------------------------
 """
 
 import json
