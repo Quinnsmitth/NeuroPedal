@@ -39,7 +39,7 @@ def render_one(midi_path: Path, wav_path: Path):
         print("Command:", " ".join(cmd))
         print("STDERR:\n", result.stderr)
     else:
-        print(f" Rendered {midi_path.name} → {wav_path.name}")
+        print(f" Rendered {midi_path.name} -> {wav_path.name}")
 
 # Gather all valid MIDI files (skip macOS ._ files)
 midis = [m for m in midi_dir.glob("*.mid") if not m.name.startswith("._")]
@@ -54,4 +54,4 @@ else:
         except Exception as e:
             print(f" Skipping {midi_file.name} due to error: {e}")
 
-print(f"\nFast WAV rendering complete → {wav_dir}")
+print(f"\nFast WAV rendering complete ->  {wav_dir}")
