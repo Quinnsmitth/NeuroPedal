@@ -11,6 +11,8 @@ wav_dir.mkdir(parents=True, exist_ok=True)
 
 project_root = Path(__file__).resolve().parent.parent
 soundfont_dir = project_root / "soundfonts"
+
+# Find any .sf2 or .sf3 soundfont files
 sf2_files = list(soundfont_dir.glob("*.sf2")) + list(soundfont_dir.glob("*.sf3"))
 if not sf2_files:
     raise FileNotFoundError(f"No soundfont found in {soundfont_dir}")
@@ -19,7 +21,7 @@ soundfont = str(sf2_files[0])
 print(f"Using soundfont: {soundfont}")
 
 def render_one(midi_path: Path, wav_path: Path):
-    # Build an offline, silent render command.
+    """Render a single MIDI file to WAV using FluidSynth."""
     cmd = [
         "fluidsynth",
         "-ni",
@@ -30,23 +32,26 @@ def render_one(midi_path: Path, wav_path: Path):
         soundfont,                  # soundfont
         str(midi_path),             # midi file
     ]
-    # Run and capture stderr for helpful messages
+
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print("Fluidsynth failed.")
+        print(f"\n FluidSynth failed for {midi_path.name}")
         print("Command:", " ".join(cmd))
-        print("STDOUT:\n", result.stdout)
         print("STDERR:\n", result.stderr)
-        result.check_returncode()  # will raise CalledProcessError
+    else:
+        print(f" Rendered {midi_path.name} → {wav_path.name}")
 
-# Optional: quick sanity check for missing MIDIs
-midis = list(midi_dir.glob("*.mid"))
+# Gather all valid MIDI files (skip macOS ._ files)
+midis = [m for m in midi_dir.glob("*.mid") if not m.name.startswith("._")]
+
 if not midis:
-    print(f"⚠No MIDI files found in {midi_dir}. Run generate_midi.py first.")
+    print(f"No valid MIDI files found in {midi_dir}. Run generate_midi.py first.")
 else:
     for midi_file in midis:
         wav_file = wav_dir / (midi_file.stem + ".wav")
-        render_one(midi_file, wav_file)
-        print(f"⚡ Rendered {midi_file.name} → {wav_file.name}")
+        try:
+            render_one(midi_file, wav_file)
+        except Exception as e:
+            print(f" Skipping {midi_file.name} due to error: {e}")
 
-print(f"Fast WAV rendering complete → {wav_dir}")
+print(f"\nFast WAV rendering complete → {wav_dir}")
