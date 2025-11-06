@@ -34,4 +34,4 @@ def train_model(data_dir, epochs=20, batch_size=8, lr=1e-4, device=None):
     print("Training complete, model saved as ts9_resnet_weights.pth")
 
 if __name__ == "__main__":
-    train_model(data_dir="/Volumes/PortableSSD/data/split")
+    train_model(data_dir="/Volumes/PortableSSD/guitar_data/dist")

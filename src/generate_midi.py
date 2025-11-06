@@ -18,7 +18,7 @@ print(f"Writing clean guitar riffs to: {midi_dir}")
 CLEAN_GUITAR_PROGRAM = 27
 
 # Realistic electric guitar note range (E2–A5)
-GUITAR_RANGE = range(40, 82)
+GUITAR_RANGE = range(40, 89)
 
 # Common guitar scales (intervals from root note)
 SCALES = {
@@ -101,3 +101,9 @@ with open(metadata_path, "w") as f:
     json.dump(metadata, f, indent=4)
 
 print(f"\n Generated {num_files} clean guitar riffs and saved metadata to {metadata_path}")
+
+
+
+## def create_clean_chord_progression(filepath, tempo_bpm=120, num_bars=4):
+##     mid = MidiFile()
+##     track = MidiTrack()
