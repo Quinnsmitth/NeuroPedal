@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+# Add /src directory to Python path BEFORE other imports
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -7,6 +13,9 @@ from tqdm import tqdm
 from dataLoader import GuitarPedalDataset
 from select_path import load_config
 import warnings
+
+# Add /src directory to Python path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
