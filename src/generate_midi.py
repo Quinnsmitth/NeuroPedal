@@ -29,6 +29,10 @@ SCALES = {
     "E_minor_pent": [0, 3, 5, 7, 10, 12],
     "A_blues":      [0, 3, 5, 6, 7, 10, 12],
     "G_major":      [0, 2, 4, 5, 7, 9, 11, 12],
+    "D_mixolydian": [0, 2, 4, 5, 7, 9, 10, 12],
+    "G_mixolydian": [0, 2, 4, 5, 7, 9, 10, 12],
+    "C_mixolydian": [0, 2, 4, 5, 7, 9, 10, 12],
+    "major_pent": [0, 2, 4, 7, 9, 12],
 }
 
 def create_clean_guitar_riff(filepath, tempo_bpm=120, num_bars=2):
@@ -36,113 +40,195 @@ def create_clean_guitar_riff(filepath, tempo_bpm=120, num_bars=2):
     track = MidiTrack()
     mid.tracks.append(track)
 
-    # Choose scale and key
     key_name, scale = random.choice(list(SCALES.items()))
-    root_note = random.choice([40, 45, 50, 52, 55, 57, 59])  # E2–B3
+    root_note = random.choice([47, 50, 52, 55, 57])  # choose mid-neck range
 
-    # Tempo metadata
     track.append(MetaMessage('set_tempo', tempo=bpm2tempo(tempo_bpm), time=0))
-
-    # Set instrument to clean electric guitar
     track.append(Message('program_change', program=CLEAN_GUITAR_PROGRAM, time=0))
 
-    # MIDI timing setup
-    ticks_per_beat = mid.ticks_per_beat
-    riff_length_ticks = num_bars * 4 * ticks_per_beat  # 4 beats per bar
+    ticks = mid.ticks_per_beat
+    total_length = num_bars * 4 * ticks
     time = 0
 
-    while time < riff_length_ticks:
-        # Pick a note from the scale
+    last_note = None
+
+    while time < total_length:
         interval = random.choice(scale)
         note = root_note + interval
-        if note not in GUITAR_RANGE:
-            note = min(max(note, min(GUITAR_RANGE)), max(GUITAR_RANGE))
+        note = max(min(note, max(GUITAR_RANGE)), min(GUITAR_RANGE))
 
-        # Duration: 1/8, 1/16, or 1/4 note
-        duration = random.choice([ticks_per_beat // 2, ticks_per_beat, ticks_per_beat * 3 // 2])
+        velocity = random.randint(80, 120)
 
-        # Small human timing variation
-        delay = random.choice([0, 10, 20, -10])
+        duration = random.choice([ticks//2, ticks, ticks*3//2])
 
-        # Velocity for pluck strength
-        velocity = random.randint(70, 115)
-        if random.random() < 0.1:
-            # occasional ghost note
-            velocity = random.randint(40, 60)
+        # LEGATO overlap
+        overlap = random.randint(15, 45)
 
-        # Add the note events
-        track.append(Message('note_on', note=note, velocity=velocity, time=max(0, delay)))
-        track.append(Message('note_off', note=note, velocity=velocity, time=duration))
+        # PICK ATTACK variance
+        pick_delay = random.choice([0, 3, 7, -4])
+
+        # HAMMER-ON / PULL-OFF
+        if last_note and random.random() < 0.25:
+            note = last_note + random.choice([-2, -1, 1, 2])
+
+        # SLIDE (pitch bends)
+        if random.random() < 0.15:
+            track.append(Message('pitchwheel', pitch=random.choice([-1600, 1600]), time=30))
+            track.append(Message('pitchwheel', pitch=0, time=30))
+
+        # NOTE ON
+        track.append(Message('note_on', note=note, velocity=velocity, time=max(0, pick_delay)))
+
+        # Vibrato on sustained notes
+        if duration > ticks:
+            vib = random.randint(100, 600)
+            track.append(Message('pitchwheel', pitch=vib, time=duration//3))
+            track.append(Message('pitchwheel', pitch=-vib, time=duration//3))
+            track.append(Message('pitchwheel', pitch=0, time=duration//3))
+        else:
+            track.append(Message('note_off', note=note, velocity=velocity, time=duration - overlap))
 
         time += duration
+        last_note = note
 
     mid.save(filepath)
 
-    # Return metadata for this riff
     return {
         "filename": filepath.name,
         "tempo": tempo_bpm,
         "key": key_name,
-        "program": CLEAN_GUITAR_PROGRAM,
-        "bars": num_bars,
-        "instrument": "clean_electric_guitar"
+        "style": "rock_clean",
+        "techniques": ["legato", "vibrato", "hammer_ons", "slides"]
     }
+
+def create_grateful_dead_riff(filepath, tempo_bpm=110, num_bars=4):
+    mid = MidiFile()
+    track = MidiTrack()
+    mid.tracks.append(track)
+
+    # Choose key & mode (Mixolydian preferred)
+    key_name, scale = random.choice([
+        ("D_mixolydian", SCALES["D_mixolydian"]),
+        ("G_mixolydian", SCALES["G_mixolydian"]),
+        ("C_mixolydian", SCALES["C_mixolydian"]),
+        ("major_pent",   SCALES["major_pent"])
+    ])
+
+    root_note = random.choice([50, 52, 55, 57])  # mid neck range
+
+    track.append(MetaMessage('set_tempo', tempo=bpm2tempo(tempo_bpm), time=0))
+    track.append(Message('program_change', program=CLEAN_GUITAR_PROGRAM, time=0))
+
+    ticks = mid.ticks_per_beat
+    total_ticks = num_bars * 4 * ticks
+    time = 0
+
+    last_note = None
+
+    while time < total_ticks:
+        # choose interval from scale
+        interval = random.choice(scale)
+        note = root_note + interval
+
+        # humanize velocity for Garcia touch
+        velocity = random.randint(70, 105)
+
+        # phrasing: mostly 1/8 notes w/ swing
+        duration = random.choice([ticks//2, ticks//2 + ticks//8])
+
+        # add grace slur (hammer-on/pull-off)
+        if last_note and random.random() < 0.3:
+            note = last_note + random.choice([-2, -1, 1, 2])
+
+        # OCTAVE SLIDE (Jerry trademark)
+        if random.random() < 0.12:
+            slide_target = note + 12
+            track.append(Message("note_on", note=note, velocity=velocity, time=0))
+            track.append(Message("pitchwheel", pitch=3000, time=60))
+            track.append(Message("note_off", note=note, velocity=velocity, time=10))
+            note = slide_target
+
+        # play note
+        track.append(Message("note_on", note=note, velocity=velocity, time=max(0, random.randint(-5, 10))))
+
+        # add vibrato to sustained phrases
+        if duration > ticks//2 and random.random() < 0.4:
+            vib_amt = random.randint(200, 900)
+            track.append(Message("pitchwheel", pitch=vib_amt, time=duration//3))
+            track.append(Message("pitchwheel", pitch=-vib_amt, time=duration//3))
+            track.append(Message("pitchwheel", pitch=0, time=duration//3))
+        else:
+            track.append(Message("note_off", note=note, velocity=velocity, time=duration))
+
+        last_note = note
+        time += duration
+
+    mid.save(filepath)
+
+    return {
+        "filename": filepath.name,
+        "style": "grateful_dead_lead",
+        "key": key_name,
+        "techniques": ["mixolydian", "grace_notes", "vibrato", "slides", "pentatonic coloration"]
+    }
+
 def create_clean_chord_progression(filepath, tempo_bpm=120, num_bars=4):
     mid = MidiFile()
     track = MidiTrack()
     mid.tracks.append(track)
 
     track.append(MetaMessage('set_tempo', tempo=bpm2tempo(tempo_bpm), time=0))
-    track.append(Message('program_change', program=27, time=0))
+    track.append(Message('program_change', program=CLEAN_GUITAR_PROGRAM, time=0))
 
-   # Define basic chords as MIDI note numbers
-    C_major = [60, 64, 67]      # C E G
-    G_major = [67, 71, 74]      # G B D
-    A_minor = [57, 60, 64]      # A C E
-    F_major = [65, 69, 72]      # F A C
-    D_minor = [62, 65, 69]      # D F A
-    E_minor = [64, 67, 71]      # E G B
-    B_dim   = [59, 62, 65]      # B D F (diminished)
-    D_major = [62, 66, 69] 
-# Popular progressions
-    chord_progressions = [
-        [C_major, G_major, A_minor, F_major],  # I-V-vi-IV
-        [A_minor, F_major, C_major, G_major],  # vi-IV-I-V
-        [C_major, F_major, G_major, C_major],  # I-IV-V-I
-        [D_minor, G_major, C_major, A_minor],  # ii-V-I-vi
-        [E_minor, C_major, G_major, D_major],  # Em-C-G-D (common in pop/rock)
-        [A_minor, D_minor, G_major, C_major],  # vi-ii-V-I
-        [C_major, A_minor, D_minor, G_major],  # I-vi-ii-V
-        [F_major, G_major, E_minor, A_minor],  # IV-V-iii-vi
-        [G_major, D_major, E_minor, C_major],  # V-I-ii-IV
-        [C_major, E_minor, F_major, G_major],  # I-iii-IV-V
+    chords = [
+        [60, 64, 67], [67, 71, 74], [57, 60, 64], [65, 69, 72],
+        [62, 65, 69], [64, 67, 71], [59, 62, 65]
     ]
+    progression = random.choices(chords, k=num_bars)
 
-    progression = random.choice(chord_progressions)
+    ticks = mid.ticks_per_beat
+    chord_dur = 4 * ticks
 
-    ticks_per_beat = mid.ticks_per_beat
-    beats_per_bar = 4
-    chord_duration = ticks_per_beat * beats_per_bar
+    for chord in progression:
+        # STRUM — downward pick (low strings first)
+        for i, note in enumerate(chord):
+            track.append(Message('note_on', note=note, velocity=90 - i*8, time=i * 25))
 
-    for chord in progression[:num_bars]:
+        # Light vibrato across chord
+        track.append(Message('pitchwheel', pitch=400, time=chord_dur//3))
+        track.append(Message('pitchwheel', pitch=-400, time=chord_dur//3))
+        track.append(Message('pitchwheel', pitch=0, time=chord_dur//3))
+
+        # NOTE OFF
         for note in chord:
-            track.append(Message('note_on', note=note, velocity=90, time=0))
-        for note in chord:
-            track.append(Message('note_off', note=note, velocity=90, time=chord_duration))
+            track.append(Message('note_off', note=note, velocity=64, time=3))
+
+        # GHOST CHORD TAP (muted strum)
+        if random.random() < 0.3:
+            ghost = chord[random.randint(0, len(chord)-1)]
+            track.append(Message('note_on', note=ghost, velocity=30, time=20))
+            track.append(Message('note_off', note=ghost, velocity=30, time=40))
 
     mid.save(filepath)
 
 
 
 metadata = []
-for i in range(5):
+for i in range(10):
     tempo = random.choice(range(90, 161, 10))  # 90–160 BPM
     bars = random.choice([1, 2, 4])
     fpath = midi_dir / f"clean_riff_{i:03d}.mid"
     meta = create_clean_guitar_riff(fpath, tempo_bpm=tempo, num_bars=bars)
     metadata.append(meta)
 
-for i in range(5):
+for i in range(10):
+    tempo = random.choice(range(90, 140, 5))  # Dead groove tempos
+    bars = random.choice([2, 4, 8])
+    fpath = midi_dir / f"dead_riff_{i:03d}.mid"
+    meta = create_grateful_dead_riff(fpath, tempo_bpm=tempo, num_bars=bars)
+    metadata.append(meta)
+
+for i in range(10):
     tempo = random.choice(range(90, 161, 10))
     bars = random.choice([1, 2, 4])
     fpath = midi_dir / f"clean_chord_{i:03d}.mid"
