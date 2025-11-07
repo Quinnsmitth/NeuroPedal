@@ -5,3 +5,6 @@ Classification/__pycache__/
 .DS_Store
 
 config.json
+
+__pycache__/
+*.pyc
