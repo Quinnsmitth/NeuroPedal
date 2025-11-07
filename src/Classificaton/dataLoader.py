@@ -1,7 +1,11 @@
+#src/dataLoader.py
+
 import os
 import torch
 import torchaudio
 from torch.utils.data import Dataset
+from pedalboard.io import AudioFile
+import numpy as np
 
 class GuitarPedalDataset(Dataset):
     def __init__(self, data_dir, transform=None, target_length=160000):  # ≈ 4 sec at 40kHz
@@ -31,27 +35,35 @@ class GuitarPedalDataset(Dataset):
         file_path = os.path.join(self.data_dir, file_name)
 
         try:
-            waveform, sr = torchaudio.load(file_path)
+            # Load WAV reliably (works on Windows, no FFmpeg required)
+            with AudioFile(file_path) as f:
+                audio = f.read(f.frames)
+                sr = f.samplerate
         except Exception as e:
             print(f" Skipping unreadable file: {file_name} ({e})")
-            return torch.zeros((2, self.target_length)), torch.tensor([0, 0], dtype=torch.float32)
+            # return dummy waveform + dummy label so training won't crash
+            return torch.zeros((1, self.target_length)), torch.tensor([0, 0], dtype=torch.float32)
 
-        waveform = self.pad_or_trim(waveform)
-        if self.transform:
-            waveform = self.transform(waveform)
+        # Convert to tensor
+        audio = torch.tensor(audio, dtype=torch.float32)
 
-        # Parse drive and tone
+        # Convert stereo → mono if needed
+        if audio.ndim == 2:
+            audio = torch.mean(audio, dim=0, keepdim=True)
+
+        # Ensure consistent length
+        audio = self.pad_or_trim(audio)
+
+        # ---- Parse Drive / Tone From Filename ----
         base = os.path.splitext(file_name)[0]
         parts = base.split('_')
-        drive_part = [p for p in parts if p.startswith("drive")]
-        tone_part = [p for p in parts if p.startswith("tone")]
 
         try:
-            drive = int(drive_part[0].replace("drive", "")) if drive_part else 0
-            tone = int(tone_part[0].replace("tone", "")) if tone_part else 0
-        except Exception as e:
-            print(f" Skipping malformed file: {file_name} ({e})")
+            drive = int([p for p in parts if p.startswith("drive")][0].replace("drive", ""))
+            tone = int([p for p in parts if p.startswith("tone")][0].replace("tone", ""))
+        except:
             drive, tone = 0, 0
 
         label = torch.tensor([drive, tone], dtype=torch.float32)
-        return waveform, label
+
+        return audio, label
