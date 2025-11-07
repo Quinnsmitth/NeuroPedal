@@ -33,7 +33,7 @@ class GuitarPedalDataset(Dataset):
         try:
             waveform, sr = torchaudio.load(file_path)
         except Exception as e:
-            print(f"⚠️ Skipping unreadable file: {file_name} ({e})")
+            print(f" Skipping unreadable file: {file_name} ({e})")
             return torch.zeros((2, self.target_length)), torch.tensor([0, 0], dtype=torch.float32)
 
         waveform = self.pad_or_trim(waveform)
@@ -50,7 +50,7 @@ class GuitarPedalDataset(Dataset):
             drive = int(drive_part[0].replace("drive", "")) if drive_part else 0
             tone = int(tone_part[0].replace("tone", "")) if tone_part else 0
         except Exception as e:
-            print(f"⚠️ Skipping malformed file: {file_name} ({e})")
+            print(f" Skipping malformed file: {file_name} ({e})")
             drive, tone = 0, 0
 
         label = torch.tensor([drive, tone], dtype=torch.float32)

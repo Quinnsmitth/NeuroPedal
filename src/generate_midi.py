@@ -85,25 +85,58 @@ def create_clean_guitar_riff(filepath, tempo_bpm=120, num_bars=2):
         "bars": num_bars,
         "instrument": "clean_electric_guitar"
     }
+def create_clean_chord_progression(filepath, tempo_bpm=120, num_bars=4):
+    mid = MidiFile()
+    track = MidiTrack()
+    mid.tracks.append(track)
+
+    track.append(MetaMessage('set_tempo', tempo=bpm2tempo(tempo_bpm), time=0))
+    track.append(Message('program_change', program=27, time=0))
+
+    # Define chords
+    C_major = [60, 64, 67]
+    G_major = [67, 71, 74]
+    A_minor = [57, 60, 64]
+    F_major = [65, 69, 72]
+
+    chord_progressions = [
+        [C_major, G_major, A_minor, F_major],
+        [A_minor, F_major, C_major, G_major],
+    ]
+
+    progression = random.choice(chord_progressions)
+
+    ticks_per_beat = mid.ticks_per_beat
+    beats_per_bar = 4
+    chord_duration = ticks_per_beat * beats_per_bar
+
+    for chord in progression[:num_bars]:
+        for note in chord:
+            track.append(Message('note_on', note=note, velocity=90, time=0))
+        for note in chord:
+            track.append(Message('note_off', note=note, velocity=90, time=chord_duration))
+
+    mid.save(filepath)
+
+
 
 metadata = []
-num_files = 100
-
-for i in range(num_files):
+for i in range(50):
     tempo = random.choice(range(90, 161, 10))  # 90–160 BPM
     bars = random.choice([1, 2, 4])
     fpath = midi_dir / f"clean_riff_{i:03d}.mid"
     meta = create_clean_guitar_riff(fpath, tempo_bpm=tempo, num_bars=bars)
     metadata.append(meta)
 
-# Save metadata file
+for i in range(50):
+    tempo = random.choice(range(90, 161, 10))
+    bars = random.choice([1, 2, 4])
+    fpath = midi_dir / f"clean_chord_{i:03d}.mid"
+    meta = create_clean_chord_progression(fpath, tempo_bpm=tempo, num_bars=bars)
+    metadata.append(meta)
+
 with open(metadata_path, "w") as f:
     json.dump(metadata, f, indent=4)
 
-print(f"\n Generated {num_files} clean guitar riffs and saved metadata to {metadata_path}")
-
-
-
-## def create_clean_chord_progression(filepath, tempo_bpm=120, num_bars=4):
-##     mid = MidiFile()
-##     track = MidiTrack()
+print(f"Generated 50 riffs and 50 chord progressions → {midi_dir}")
+print(f"Metadata saved to {metadata_path}")
