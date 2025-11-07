@@ -72,7 +72,7 @@ def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resn
         scheduler.step(avg_loss)
         print(f"Epoch [{epoch+1}/{num_epochs}] — Avg Loss: {avg_loss:.6f}")
 
-    torch.save(model.state_dict(), "guitar_model_improved.pth")
+    torch.save(model.state_dict(), "../../weights/guitar_model_improved.pth")
     print("\nTraining complete — model saved as guitar_model_improved.pth\n")
 
 
