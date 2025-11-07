@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import models
 from tqdm import tqdm
 from dataLoader import GuitarPedalDataset
-from src.select_path import load_config
+from select_path import load_config
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
