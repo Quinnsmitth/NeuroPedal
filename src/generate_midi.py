@@ -93,15 +93,27 @@ def create_clean_chord_progression(filepath, tempo_bpm=120, num_bars=4):
     track.append(MetaMessage('set_tempo', tempo=bpm2tempo(tempo_bpm), time=0))
     track.append(Message('program_change', program=27, time=0))
 
-    # Define chords
-    C_major = [60, 64, 67]
-    G_major = [67, 71, 74]
-    A_minor = [57, 60, 64]
-    F_major = [65, 69, 72]
-
+   # Define basic chords as MIDI note numbers
+    C_major = [60, 64, 67]      # C E G
+    G_major = [67, 71, 74]      # G B D
+    A_minor = [57, 60, 64]      # A C E
+    F_major = [65, 69, 72]      # F A C
+    D_minor = [62, 65, 69]      # D F A
+    E_minor = [64, 67, 71]      # E G B
+    B_dim   = [59, 62, 65]      # B D F (diminished)
+    D_major = [62, 66, 69] 
+# Popular progressions
     chord_progressions = [
-        [C_major, G_major, A_minor, F_major],
-        [A_minor, F_major, C_major, G_major],
+        [C_major, G_major, A_minor, F_major],  # I-V-vi-IV
+        [A_minor, F_major, C_major, G_major],  # vi-IV-I-V
+        [C_major, F_major, G_major, C_major],  # I-IV-V-I
+        [D_minor, G_major, C_major, A_minor],  # ii-V-I-vi
+        [E_minor, C_major, G_major, D_major],  # Em-C-G-D (common in pop/rock)
+        [A_minor, D_minor, G_major, C_major],  # vi-ii-V-I
+        [C_major, A_minor, D_minor, G_major],  # I-vi-ii-V
+        [F_major, G_major, E_minor, A_minor],  # IV-V-iii-vi
+        [G_major, D_major, E_minor, C_major],  # V-I-ii-IV
+        [C_major, E_minor, F_major, G_major],  # I-iii-IV-V
     ]
 
     progression = random.choice(chord_progressions)
