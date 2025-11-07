@@ -87,7 +87,7 @@ def create_clean_guitar_riff(filepath, tempo_bpm=120, num_bars=2):
     }
 
 metadata = []
-num_files = 100
+num_files = 20
 
 for i in range(num_files):
     tempo = random.choice(range(90, 161, 10))  # 90–160 BPM
