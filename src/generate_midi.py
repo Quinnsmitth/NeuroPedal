@@ -1,3 +1,5 @@
+#src/generate_midi.py
+
 from mido import MidiFile, MidiTrack, Message, MetaMessage, bpm2tempo
 from pathlib import Path
 import random, json
@@ -133,14 +135,14 @@ def create_clean_chord_progression(filepath, tempo_bpm=120, num_bars=4):
 
 
 metadata = []
-for i in range(50):
+for i in range(5):
     tempo = random.choice(range(90, 161, 10))  # 90–160 BPM
     bars = random.choice([1, 2, 4])
     fpath = midi_dir / f"clean_riff_{i:03d}.mid"
     meta = create_clean_guitar_riff(fpath, tempo_bpm=tempo, num_bars=bars)
     metadata.append(meta)
 
-for i in range(50):
+for i in range(5):
     tempo = random.choice(range(90, 161, 10))
     bars = random.choice([1, 2, 4])
     fpath = midi_dir / f"clean_chord_{i:03d}.mid"

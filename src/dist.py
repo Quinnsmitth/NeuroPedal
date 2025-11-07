@@ -17,9 +17,9 @@ print(f"Input directory: {input_dir}")
 print(f"Output directory: {output_dir}")
 
 # Load Plugin
-plugin_path = "/Library/Audio/Plug-Ins/VST3/Audiority/Dr Drive.vst3"
-plugin = initialize_plugin(load_plugin(plugin_path))
-print(f"Plugin loaded: {plugin.name}")
+plugin_path = root / "pedal/Dr Drive.vst3"
+plugin = load_plugin(str(plugin_path))
+#print(f"Plugin loaded: {plugin.name}")
 
 # Parameter Ranges
 drive_vals = np.linspace(0, 100, 11)  # 0%, 10%, ..., 100%
