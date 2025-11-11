@@ -19,7 +19,7 @@ print(f"Writing clean guitar riffs to: {midi_dir}")
 # Electric guitar (clean) program number (General MIDI 28 → index 27)
 CLEAN_GUITAR_PROGRAM = 27
 
-# Realistic electric guitar note range (E2–A5)
+# Realistic electric guitar note range (E2–E6)
 GUITAR_RANGE = range(40, 89)
 
 # Common guitar scales (intervals from root note)
@@ -41,6 +41,7 @@ def create_clean_guitar_riff(filepath, tempo_bpm=120, num_bars=2):
     mid.tracks.append(track)
 
     key_name, scale = random.choice(list(SCALES.items()))
+    # Select root note within guitar range B2, D3, E3, G3, A3
     root_note = random.choice([47, 50, 52, 55, 57])  # choose mid-neck range
 
     track.append(MetaMessage('set_tempo', tempo=bpm2tempo(tempo_bpm), time=0))
