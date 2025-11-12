@@ -1,5 +1,13 @@
 from mido import MidiFile, MidiTrack, Message, MetaMessage, bpm2tempo
+from pathlib import Path
 import random
+import os
+
+# Get path to the user's Downloads folder (works on Windows, macOS, Linux)
+downloads_dir = Path.home() / "Downloads"
+
+# Create the MIDI file path
+midi_path = downloads_dir / "simple_guitar_riff.mid"
 
 # Create a new MIDI file and track
 mid = MidiFile()
@@ -26,6 +34,6 @@ for i in range(8):
     track.append(Message('note_on', note=note, velocity=velocity, time=0))
     track.append(Message('note_off', note=note, velocity=0, time=duration))
 
-# Save to file
-mid.save('simple_guitar_riff.mid')
-print("✅ Saved MIDI file: simple_guitar_riff.mid")
+# Save the file
+mid.save(midi_path)
+print(f"✅ Saved MIDI file to: {midi_path}")
