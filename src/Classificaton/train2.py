@@ -131,3 +131,5 @@ def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resn
 
 if __name__ == "__main__":
     train_model(data_dir=dist, model_name="resnet34")
+
+# TODO: SHUFFLE DATA!!!!!
