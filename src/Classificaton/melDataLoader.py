@@ -18,7 +18,7 @@ class GuitarPedalDataset(Dataset):
 
         # Define a mel-spectrogram transform
         self.mel_transform = torchaudio.transforms.MelSpectrogram(
-            sample_rate=40000,  # assuming your audio is 40 kHz
+            sample_rate=41000, 
             n_fft=1024,
             hop_length=512,
             n_mels=128,
@@ -57,14 +57,14 @@ class GuitarPedalDataset(Dataset):
             audio = torch.mean(audio, dim=0, keepdim=True)
         audio = self.pad_or_trim(audio)
 
-        # --- Convert waveform → mel spectrogram ---
+        #  Convert waveform  mel spectrogram 
         mel = self.mel_transform(audio)
         mel_db = self.db_transform(mel)
 
         # Normalize spectrogram
         mel_db = (mel_db - mel_db.mean()) / (mel_db.std() + 1e-6)
 
-        # ---- Parse Drive / Tone from filename ----
+        #  Parse Drive / Tone from filename 
         base = os.path.splitext(file_name)[0]
         parts = base.split('_')
         try:
