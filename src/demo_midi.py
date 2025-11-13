@@ -15,7 +15,7 @@ track = MidiTrack()
 mid.tracks.append(track)
 
 # Parameters
-bpm = 100
+bpm = 180
 preset = 27
 length = 8
 
@@ -41,4 +41,4 @@ for i in range(length):
 
 # Save the file
 mid.save(midi_path)
-print(f"✅ Saved MIDI file to: {midi_path}")
+print(f"Saved MIDI file to: {midi_path}")
