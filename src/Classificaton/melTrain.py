@@ -10,17 +10,15 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from torchvision import models
 from tqdm import tqdm
-from dataLoader import GuitarPedalDataset
+from melDataLoader import GuitarPedalDataset 
 from select_path import load_config
 import warnings
-
-# Add /src directory to Python path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
 root = load_config()
 dist = root / "distorted"
+
 
 def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resnet18"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -37,9 +35,9 @@ def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resn
     print(f"Dataset split: {train_size} train | {val_size} val | {test_size} test")
 
     # --- Create data loaders ---
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=2)
+    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=2)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=2)
 
     # --- Model setup ---
     print(f"Training on {len(train_set)} samples for {num_epochs} epochs")
@@ -49,9 +47,11 @@ def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resn
     else:
         model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 
-    model.fc = nn.Linear(model.fc.in_features, 2)  # Drive, Tone regression
-    model = model.to(device)
+    # Replace first conv layer for 1 channel mel input
+    model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    model.fc = nn.Linear(model.fc.in_features, 2)  # Predict Drive & Tone
 
+    model = model.to(device)
     criterion = nn.SmoothL1Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=4)
@@ -63,19 +63,14 @@ def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resn
 
         for x, y in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}", leave=False):
             x, y = x.to(device), y.to(device)
+
+            # Ensure correct input shape [B, 1, H, W]
             if x.ndim == 3:
                 x = x.unsqueeze(1)
 
-            # Normalize input and labels
-            mean = x.mean(dim=[1, 2, 3], keepdim=True)
-            std = x.std(dim=[1, 2, 3], keepdim=True) + 1e-6
-            x = (x - mean) / std
-            x = x.repeat(1, 3, 1, 1)
-            y = y / 10.0
-
             optimizer.zero_grad()
             outputs = model(x)
-            loss = criterion(outputs, y)
+            loss = criterion(outputs, y / 10.0)  # Normalize target
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -90,15 +85,8 @@ def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resn
                 x, y = x.to(device), y.to(device)
                 if x.ndim == 3:
                     x = x.unsqueeze(1)
-
-                mean = x.mean(dim=[1, 2, 3], keepdim=True)
-                std = x.std(dim=[1, 2, 3], keepdim=True) + 1e-6
-                x = (x - mean) / std
-                x = x.repeat(1, 3, 1, 1)
-                y = y / 10.0
-
                 outputs = model(x)
-                loss = criterion(outputs, y)
+                loss = criterion(outputs, y / 10.0)
                 val_loss += loss.item()
 
         avg_val_loss = val_loss / len(val_loader)
@@ -113,23 +101,15 @@ def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resn
             x, y = x.to(device), y.to(device)
             if x.ndim == 3:
                 x = x.unsqueeze(1)
-            mean = x.mean(dim=[1, 2, 3], keepdim=True)
-            std = x.std(dim=[1, 2, 3], keepdim=True) + 1e-6
-            x = (x - mean) / std
-            x = x.repeat(1, 3, 1, 1)
-            y = y / 10.0
-
             outputs = model(x)
-            loss = criterion(outputs, y)
+            loss = criterion(outputs, y / 10.0)
             test_loss += loss.item()
 
     print(f"\nFinal Test Loss: {test_loss / len(test_loader):.6f}")
 
-    torch.save(model.state_dict(), "../../weights/guitar_model_improved.pth")
-    print("\nTraining complete — model saved as guitar_model_improved.pth\n")
+    torch.save(model.state_dict(), "../../weights/guitar_model_mel.pth")
+    print("\nTraining complete — model saved as guitar_model_mel.pth\n")
 
 
 if __name__ == "__main__":
     train_model(data_dir=dist, model_name="resnet34")
-
-# TODO: SHUFFLE DATA!!!!!
