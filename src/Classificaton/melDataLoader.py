@@ -7,7 +7,7 @@ from pedalboard.io import AudioFile
 import numpy as np
 
 class GuitarPedalDataset(Dataset):
-    def __init__(self, data_dir, transform=None, target_length=160000):  # ≈ 4 sec at 40kHz
+    def __init__(self, data_dir, transform=None, target_length=160000):  # 4 sec at 40kHz
         self.data_dir = data_dir
         self.transform = transform
         self.target_length = target_length
