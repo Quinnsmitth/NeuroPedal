@@ -6,125 +6,103 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, random_split
 from torchvision import models
-from tqdm import tqdm
-from melDataLoader import GuitarPedalDataset
+import torchaudio
+import numpy as np
+from melDataLoader import mel_spectrogram  # If your loader has a mel function
 from select_path import load_config
-import warnings
-
-warnings.filterwarnings("ignore", category=UserWarning)
-
-root = load_config()
-dist = root / "distorted"
 
 
-def train_model(data_dir, num_epochs=100, batch_size=8, lr=1e-4, model_name="resnet18"):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def load_model(weights_path):
+    """Load a ResNet34 model trained on 1-channel mel spectrograms."""
+    model = models.resnet34(weights=None)
 
-    # --- Load full dataset ---
-    dataset = GuitarPedalDataset(data_dir)
-    total_size = len(dataset)
-
-    # --- Train/Val/Test split ratios ---
-    train_size = int(0.8 * total_size)
-    val_size = int(0.1 * total_size)
-    test_size = total_size - train_size - val_size
-
-    # --- Reproducible split ---
-    generator = torch.Generator().manual_seed(42)
-    train_set, val_set, test_set = random_split(
-        dataset, [train_size, val_size, test_size], generator=generator
+    # 1-channel for mel spectrograms
+    model.conv1 = nn.Conv2d(
+        1, 64, kernel_size=7, stride=2, padding=3, bias=False
     )
 
-    print(f"Dataset split: {train_size} train | {val_size} val | {test_size} test")
+    # 2 output values (Drive, Tone)
+    model.fc = nn.Linear(model.fc.in_features, 2)
 
-    # --- Create DataLoaders ---
-    # num_workers=0 for macOS safety
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=0)
-    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=0)
+    # Load checkpoint
+    state = torch.load(weights_path, map_location="cpu")
 
-    # --- Model selection ---
-    print(f"Training on {len(train_set)} samples for {num_epochs} epochs")
+    # Filter out conv1 mismatch if checkpoint used 3 channels
+    filtered_state = {}
+    for k, v in state.items():
+        if k == "conv1.weight" and v.shape[1] != 1:
+            print(f"[INFO] Skipping conv1 mismatch: checkpoint conv1 = {v.shape}")
+            continue
+        filtered_state[k] = v
 
-    if model_name == "resnet34":
-        model = models.resnet34(weights=models.ResNet34_Weights.DEFAULT)
-    else:
-        model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+    missing, unexpected = model.load_state_dict(filtered_state, strict=False)
 
-    # Modify model input/output layers
-    model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-    model.fc = nn.Linear(model.fc.in_features, 2)  # Drive & Tone regression output
+    print("Missing keys:", missing)
+    print("Unexpected keys:", unexpected)
 
-    model = model.to(device)
-    criterion = nn.SmoothL1Loss()
-    optimizer = optim.Adam(model.parameters(), lr=lr)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=4)
-
-    #       TRAIN LOOP
-    for epoch in range(num_epochs):
-        model.train()
-        train_loss = 0.0
-
-        for x, y in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}", leave=False):
-            x, y = x.to(device), y.to(device)
-
-            if x.ndim == 3:
-                x = x.unsqueeze(1)
-
-            optimizer.zero_grad()
-            outputs = model(x)
-            loss = criterion(outputs, y / 10.0)  # normalize targets
-            loss.backward()
-            optimizer.step()
-
-            train_loss += loss.item()
-
-        avg_train_loss = train_loss / len(train_loader)
-
-        #     VALIDATION LOOP
-        model.eval()
-        val_loss = 0.0
-
-        with torch.no_grad():
-            for x, y in val_loader:
-                x, y = x.to(device), y.to(device)
-                if x.ndim == 3:
-                    x = x.unsqueeze(1)
-
-                outputs = model(x)
-                loss = criterion(outputs, y / 10.0)
-                val_loss += loss.item()
-
-        avg_val_loss = val_loss / len(val_loader)
-        scheduler.step(avg_val_loss)
-
-        print(f"Epoch [{epoch+1}/{num_epochs}] — Train: {avg_train_loss:.6f} | Val: {avg_val_loss:.6f}")
-
-    #         TEST LOOP
     model.eval()
-    test_loss = 0.0
+    return model
+
+
+def preprocess_audio(wav_path, target_length=160000, sr=40000):
+    """Load WAV → convert to mel spectrogram identical to training."""
+    waveform, file_sr = torchaudio.load(str(wav_path))
+
+    # Convert to mono
+    if waveform.shape[0] > 1:
+        waveform = torch.mean(waveform, dim=0, keepdim=True)
+
+    # Resample to match training
+    if file_sr != sr:
+        resampler = torchaudio.transforms.Resample(file_sr, sr)
+        waveform = resampler(waveform)
+
+    # Pad or trim to target_length (same as dataset)
+    if waveform.shape[1] < target_length:
+        pad = target_length - waveform.shape[1]
+        waveform = torch.nn.functional.pad(waveform, (0, pad))
+    else:
+        waveform = waveform[:, :target_length]
+
+    # Convert to mel
+    mel = mel_spectrogram(waveform)  # Uses your same loader function
+
+    # ResNet expects (B, C, H, W)
+    mel = mel.unsqueeze(0)  # add batch dimension
+    return mel
+
+
+def predict(wav_path, weights_path):
+    """Run inference on a single wav file."""
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = load_model(weights_path)
+    model = model.to(device)
+
+    mel = preprocess_audio(wav_path)  # shape (1, 1, mel_bins, time)
+    mel = mel.to(device)
 
     with torch.no_grad():
-        for x, y in test_loader:
-            x, y = x.to(device), y.to(device)
-            if x.ndim == 3:
-                x = x.unsqueeze(1)
+        output = model(mel)
 
-            outputs = model(x)
-            loss = criterion(outputs, y / 10.0)
-            test_loss += loss.item()
+    # Output was normalized during training: y / 10.
+    output = output * 10.0
 
-    print(f"\nFinal Test Loss: {test_loss / len(test_loader):.6f}")
+    drive = float(output[0, 0].cpu())
+    tone = float(output[0, 1].cpu())
 
-    #        SAVE MODEL
-    save_path = Path(__file__).resolve().parent / "../../weights/guitar_model_mel.pth"
-    torch.save(model.state_dict(), save_path)
+    print(f"\nPrediction for {wav_path}:")
+    print(f"  Drive: {drive:.2f}")
+    print(f"  Tone:  {tone:.2f}")
 
-    print("\nTraining complete — model saved as guitar_model_mel_100_epoch.pth\n")
+    return drive, tone
 
 
 if __name__ == "__main__":
-    train_model(data_dir=dist, model_name="resnet34")
+    root = load_config()
+    weights_path = "/Users/quinnsmith/Desktop/NeuroPedal-1/weights"
+
+    # Example usage:
+    test_wav = root/"train/riff_drive50_tone100.wav"
+    predict(test_wav, weights_path)
