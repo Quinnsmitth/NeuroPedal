@@ -20,7 +20,7 @@ root = load_config()
 dist = root / "distorted"
 
 
-def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resnet18"):
+def train_model(data_dir, num_epochs=100, batch_size=8, lr=1e-4, model_name="resnet18"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # --- Load full dataset ---
@@ -123,7 +123,7 @@ def train_model(data_dir, num_epochs=50, batch_size=8, lr=1e-4, model_name="resn
     save_path = Path(__file__).resolve().parent / "../../weights/guitar_model_mel.pth"
     torch.save(model.state_dict(), save_path)
 
-    print("\nTraining complete — model saved as guitar_model_mel.pth\n")
+    print("\nTraining complete — model saved as guitar_model_mel_100_epoch.pth\n")
 
 
 if __name__ == "__main__":
