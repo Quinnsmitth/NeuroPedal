@@ -45,8 +45,8 @@ def load_model(weights_path):
     return model
 
 
-def preprocess_audio(wav_path, target_length=160000, sr=40000):
-    """Load WAV → convert to mel spectrogram identical to training."""
+def preprocess_audio(wav_path, target_length=160000, sr=41000):
+    """Load WAV -> convert to mel spectrogram identical to training."""
     waveform, file_sr = torchaudio.load(str(wav_path))
 
     # Convert to mono
