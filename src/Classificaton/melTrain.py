@@ -1,50 +1,47 @@
+# src/Classificaton/melTrain.py
+
 import sys
 from pathlib import Path
-
-# Add /src directory to Python path BEFORE other imports
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import torch
 import torch.nn as nn
-from torchvision import models
 import torchaudio
-import numpy as np
-from melDataLoader import mel_spectrogram  # If your loader has a mel function
+from melSpec import mel_spectrogram
 from select_path import load_config
+from torchvision import models
 
+# Add /src directory to Python path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-def load_model(weights_path):
-    """Load a ResNet34 model trained on 1-channel mel spectrograms."""
-    model = models.resnet34(weights=None)
+# -----------------------------
+# Define PedalResNet
+# -----------------------------
+class PedalResNet(nn.Module):
+    def __init__(self, output_size=2):
+        super().__init__()
+        self.resnet = models.resnet34(weights=None)
+        # Match the training checkpoint conv1 (3x3)
+        self.resnet.conv1 = nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.resnet.fc = nn.Linear(self.resnet.fc.in_features, output_size)
 
-    # 1-channel for mel spectrograms
-    model.conv1 = nn.Conv2d(
-        1, 64, kernel_size=7, stride=2, padding=3, bias=False
-    )
+    def forward(self, x):
+        return self.resnet(x)
 
-    # 2 output values (Drive, Tone)
-    model.fc = nn.Linear(model.fc.in_features, 2)
+    def load_weights(self, path):
+        state = torch.load(path, map_location="cpu")
+        filtered_state = {}
+        for k, v in state.items():
+            if k == "conv1.weight" and v.shape != self.resnet.conv1.weight.shape:
+                print(f"[INFO] Skipping conv1 mismatch: {v.shape} -> {self.resnet.conv1.weight.shape}")
+                continue
+            filtered_state[k] = v
+        missing, unexpected = self.resnet.load_state_dict(filtered_state, strict=False)
+        print("Missing keys:", missing)
+        print("Unexpected keys:", unexpected)
+        self.eval()
 
-    # Load checkpoint
-    state = torch.load(weights_path, map_location="cpu")
-
-    # Filter out conv1 mismatch if checkpoint used 3 channels
-    filtered_state = {}
-    for k, v in state.items():
-        if k == "conv1.weight" and v.shape[1] != 1:
-            print(f"[INFO] Skipping conv1 mismatch: checkpoint conv1 = {v.shape}")
-            continue
-        filtered_state[k] = v
-
-    missing, unexpected = model.load_state_dict(filtered_state, strict=False)
-
-    print("Missing keys:", missing)
-    print("Unexpected keys:", unexpected)
-
-    model.eval()
-    return model
-
-
+# -----------------------------
+# Audio preprocessing
+# -----------------------------
 def preprocess_audio(wav_path, target_length=160000, sr=41000):
     """Load WAV -> convert to mel spectrogram identical to training."""
     waveform, file_sr = torchaudio.load(str(wav_path))
@@ -58,37 +55,39 @@ def preprocess_audio(wav_path, target_length=160000, sr=41000):
         resampler = torchaudio.transforms.Resample(file_sr, sr)
         waveform = resampler(waveform)
 
-    # Pad or trim to target_length (same as dataset)
+    # Pad or trim to target_length
     if waveform.shape[1] < target_length:
         pad = target_length - waveform.shape[1]
         waveform = torch.nn.functional.pad(waveform, (0, pad))
     else:
         waveform = waveform[:, :target_length]
 
-    # Convert to mel
-    mel = mel_spectrogram(waveform)  # Uses your same loader function
-
-    # ResNet expects (B, C, H, W)
-    mel = mel.unsqueeze(0)  # add batch dimension
+    # Convert to mel spectrogram
+    mel = mel_spectrogram(waveform)  # your loader function
+    mel = mel.unsqueeze(0)  # Add batch dimension
     return mel
 
-
+# -----------------------------
+# Prediction
+# -----------------------------
 def predict(wav_path, weights_path):
-    """Run inference on a single wav file."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = load_model(weights_path)
-    model = model.to(device)
+    # Load model
+    model = PedalResNet()
+    model.load_weights(weights_path)
+    model.to(device)
 
-    mel = preprocess_audio(wav_path)  # shape (1, 1, mel_bins, time)
+    # Preprocess audio
+    mel = preprocess_audio(wav_path)
     mel = mel.to(device)
 
+    # Forward pass
     with torch.no_grad():
         output = model(mel)
 
-    # Output was normalized during training: y / 10.
+    # Scale output back to Drive/Tone range
     output = output * 10.0
-
     drive = float(output[0, 0].cpu())
     tone = float(output[0, 1].cpu())
 
@@ -98,11 +97,13 @@ def predict(wav_path, weights_path):
 
     return drive, tone
 
-
+# -----------------------------
+# Run example
+# -----------------------------
 if __name__ == "__main__":
     root = load_config()
-    weights_path = "/Users/quinnsmith/Desktop/NeuroPedal-1/weights"
+    weights_path = "/Users/quinnsmith/Desktop/NeuroPedal-1/weights/guitar_model_mel.pth"
 
-    # Example usage:
-    test_wav = root/"train/riff_drive50_tone100.wav"
+    # Example WAV
+    test_wav = root / "train/riff_drive50_tone100.wav"
     predict(test_wav, weights_path)
