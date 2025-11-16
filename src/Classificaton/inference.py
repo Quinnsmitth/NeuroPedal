@@ -76,7 +76,7 @@ def predict(file_path, weights_path):
 # PATH INPUT SECTION
 if __name__ == "__main__":
 
-    wav_path = "test_audio.wav"
+    wav_path = "/Volumes/PortableSSD/guitar_data/test/riff_drive50_tone100.wav"
     weights_path = "guitar_model_improved.pth"
 
     # Run prediction

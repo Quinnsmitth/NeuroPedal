@@ -239,5 +239,5 @@ for i in range(10):
 with open(metadata_path, "w") as f:
     json.dump(metadata, f, indent=4)
 
-print(f"Generated 50 riffs and 50 chord progressions → {midi_dir}")
+print(f"Generated 50 riffs and 50 chord progressions -> {midi_dir}")
 print(f"Metadata saved to {metadata_path}")
