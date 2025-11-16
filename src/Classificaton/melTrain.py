@@ -6,12 +6,11 @@ import torch
 import torch.nn as nn
 import torchaudio
 from melSpec import mel_spectrogram
-from select_path import load_config
 from torchvision import models
+from src.select_path import load_config
 
 # Add /src directory to Python path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 # -----------------------------
 # Define PedalResNet
 # -----------------------------
