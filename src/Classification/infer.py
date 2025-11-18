@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     # Project root (where weights/ lives)
     project_root = Path(__file__).resolve().parents[2]
-    weights_path = project_root / "weights" / "guitar_model_mel.pth"
+    weights_path = project_root / "weights" / "guitar_model_mel_36300_100.pth"
 
     if not weights_path.exists():
         raise FileNotFoundError(f"Missing model weights at: {weights_path}")
