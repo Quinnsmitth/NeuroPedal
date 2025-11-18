@@ -18,7 +18,7 @@ from model import PedalResNet
 
 def load_wav_as_mel(path: Path, target_length: int = 160000):
     """
-    Loads WAV → mono → pad/trim → mel → normalized mel db.
+    Loads WAV → mono → pad/trim → mel (DB).
     Matches the training pipeline exactly.
     """
     try:
@@ -44,20 +44,40 @@ def load_wav_as_mel(path: Path, target_length: int = 160000):
 
     # Compute mel spectrogram
     mel_db = mel_spectrogram(audio)  # (1, 128, time)
-    return mel_db.unsqueeze(0)       # Add batch → (1, 1, 128, time)
+
+    return mel_db.unsqueeze(0)  # → (1, 1, 128, time)
+
+
+def list_valid_wavs(distorted_dir: Path):
+    """
+    Returns all valid WAV files, skipping:
+    - macOS metadata files (._*)
+    - tiny files (< 1kb)
+    """
+    wavs = [
+        w for w in distorted_dir.glob("*.wav")
+        if not w.name.startswith("._") and w.stat().st_size > 2000
+    ]
+    return wavs
 
 
 def get_random_distorted_wav(root):
     """
     Picks a random .wav file from USB/distorted folder.
+    Filters out invalid macOS metadata files automatically.
     """
     distorted_dir = root / "distorted"
-    wavs = list(distorted_dir.glob("*.wav"))
+    wavs = list_valid_wavs(distorted_dir)
 
     if not wavs:
-        raise FileNotFoundError(f"No WAV files in {distorted_dir}")
+        raise FileNotFoundError(
+            f"No valid WAV files found in {distorted_dir}. "
+            "Do you have only macOS ._ metadata files?"
+        )
 
-    return random.choice(wavs)
+    wav_path = random.choice(wavs)
+    print(f"\nSelected random WAV: {wav_path.name}")
+    return wav_path
 
 
 def predict_file(wav_path: Path, weights_path: Path):
@@ -75,7 +95,7 @@ def predict_file(wav_path: Path, weights_path: Path):
     with torch.no_grad():
         preds = model(mel)
 
-    # Undo training normalization (labels were y/10)
+    # Undo label scaling (y/10 in training)
     preds = preds * 10
     drive, tone = preds[0].tolist()
 
@@ -102,4 +122,5 @@ if __name__ == "__main__":
 
     # Run prediction
     predict_file(wav_path, weights_path)
-    print(f"\n{wav_path}")
+
+    print(f"\nUsed file: {wav_path}\n")
