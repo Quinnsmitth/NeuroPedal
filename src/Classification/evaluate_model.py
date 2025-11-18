@@ -95,6 +95,6 @@ if __name__ == "__main__":
     distorted_dir = root / "distorted"
 
     project_root = Path(__file__).resolve().parents[2]
-    weights_path = project_root / "weights" / "guitar_model_mel.pth"
+    weights_path = project_root / "weights" / "guitar_model_mel_36300_100.pth"
 
     evaluate_model(weights_path, distorted_dir)
