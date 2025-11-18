@@ -1,4 +1,3 @@
-# src//Classification/dataLoader.py
 import os
 import torch
 import torchaudio
@@ -16,7 +15,7 @@ class GuitarPedalDataset(Dataset):
             if f.endswith(".wav") and not f.startswith("._")
         ]
 
-        # Define a mel-spectrogram transform
+        # Define a mel spectrogram transform
         self.mel_transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=41000, 
             n_fft=1024,
@@ -30,7 +29,7 @@ class GuitarPedalDataset(Dataset):
         return len(self.files)
 
     def pad_or_trim(self, waveform):
-        """Ensure all waveforms have the same length"""
+        #Ensure all waveforms have the same length
         length = waveform.size(1)
         if length > self.target_length:
             waveform = waveform[:, :self.target_length]
