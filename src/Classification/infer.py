@@ -99,11 +99,16 @@ def predict_file(wav_path: Path, weights_path: Path):
     preds = preds * 10
     drive, tone = preds[0].tolist()
 
+    # Round to nearest whole number
+    drive = round(drive)
+    tone = round(tone)
+
     print(f"\nPredicted Parameters:")
-    print(f"   Drive: {drive:.2f}")
-    print(f"   Tone : {tone:.2f}\n")
+    print(f"   Drive: {drive}")
+    print(f"   Tone : {tone}\n")
 
     return drive, tone
+
 
 
 if __name__ == "__main__":
