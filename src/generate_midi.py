@@ -215,21 +215,21 @@ def create_clean_chord_progression(filepath, tempo_bpm=120, num_bars=4):
 
 
 metadata = []
-for i in range(10):
+for i in range(100):
     tempo = random.choice(range(90, 161, 10))  # 90–160 BPM
     bars = random.choice([1, 2, 4])
     fpath = midi_dir / f"clean_riff_{i:03d}.mid"
     meta = create_clean_guitar_riff(fpath, tempo_bpm=tempo, num_bars=bars)
     metadata.append(meta)
 
-for i in range(10):
+for i in range(100):
     tempo = random.choice(range(90, 140, 5))  # Dead groove tempos
     bars = random.choice([2, 4, 8])
     fpath = midi_dir / f"dead_riff_{i:03d}.mid"
     meta = create_grateful_dead_riff(fpath, tempo_bpm=tempo, num_bars=bars)
     metadata.append(meta)
 
-for i in range(10):
+for i in range(100):
     tempo = random.choice(range(90, 161, 10))
     bars = random.choice([1, 2, 4])
     fpath = midi_dir / f"clean_chord_{i:03d}.mid"

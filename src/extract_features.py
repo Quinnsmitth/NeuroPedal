@@ -1,44 +1,68 @@
 # src/extract_features.py
 
-import librosa
+import torch
+import torchaudio
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from select_path import load_config   
+from tqdm import tqdm          # <-- progress bar
+from select_path import load_config
 
-# Load the correct base folder (USB / SSD / Desktop)
+# Load root (USB or other)
 root = load_config()
 
 distorted_dir = root / "distorted"
 feature_file = root / "features" / "distorted_features.csv"
 feature_file.parent.mkdir(parents=True, exist_ok=True)
 
+# Torchaudio MFCC extractor
+mfcc_transform = torchaudio.transforms.MFCC(
+    sample_rate=41000,
+    n_mfcc=13,
+    melkwargs={
+        "n_fft": 1024,
+        "n_mels": 128,
+        "hop_length": 512
+    }
+)
+
 rows = []
+all_files = list(distorted_dir.glob("*.wav"))
 
-for f in distorted_dir.glob("*.wav"):
-    # Load audio
-    y, sr = librosa.load(f, sr=None)
+print(f"Processing {len(all_files)} WAV files...\n")
 
-    # Extract MFCCs
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
-    mean_feats = np.mean(mfcc, axis=1)  # shape: (13,)
+# Progress bar
+for f in tqdm(all_files, desc="Extracting MFCC features"):
+    try:
+        # Load WAV
+        waveform, sr = torchaudio.load(f)
 
-    # --- Robust filename parsing ---
-    # Example filename: "clip_011_drive25_tone60.wav"
-    parts = f.stem.split("_")
-    drive_val = next(p for p in parts if p.startswith("drive"))
-    tone_val = next(p for p in parts if p.startswith("tone"))
+        # Convert to mono
+        if waveform.size(0) > 1:
+            waveform = waveform.mean(dim=0, keepdim=True)
 
-    drive = float(drive_val.replace("drive", ""))
-    tone = float(tone_val.replace("tone", ""))
+        # Resample if needed
+        if sr != 41000:
+            waveform = torchaudio.functional.resample(waveform, sr, 41000)
+            sr = 41000
 
-    rows.append([*mean_feats, drive, tone])
+        # Compute MFCCs
+        mfcc = mfcc_transform(waveform)    # (1, 13, time)
+        mfcc_mean = mfcc.mean(dim=2).squeeze(0).numpy()  # (13,)
 
-# Convert to DataFrame
-columns = [f"mfcc_{i}" for i in range(13)] + ["drive", "tone"]
-df = pd.DataFrame(rows, columns=columns)
+        # Parse drive/tone
+        parts = f.stem.split("_")
+        drive = float([p for p in parts if p.startswith("drive")][0].replace("drive", ""))
+        tone  = float([p for p in parts if p.startswith("tone")][0].replace("tone", ""))
+
+        rows.append([*mfcc_mean, drive, tone])
+
+    except Exception as e:
+        print(f"[WARN] Skipping file {f}: {e}")
 
 # Save CSV
+columns = [f"mfcc_{i}" for i in range(13)] + ["drive", "tone"]
+df = pd.DataFrame(rows, columns=columns)
 df.to_csv(feature_file, index=False)
 
-print(f"Features saved to {feature_file}")
+print(f"\nFeatures saved to {feature_file}")
