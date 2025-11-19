@@ -1,4 +1,3 @@
-# src/Classification/evaluate_model.py
 
 import sys
 from pathlib import Path
@@ -6,7 +5,6 @@ import torch
 from tqdm import tqdm
 from pedalboard.io import AudioFile
 
-# Ensure project root + src is in sys.path
 project_root = Path(__file__).resolve().parents[2]
 sys.path.append(str(project_root))
 sys.path.append(str(project_root / "src"))
@@ -24,9 +22,7 @@ from model import PedalResNet
 from sklearn.metrics import confusion_matrix
 
 
-# ----------------------------------------------------------
-# Load WAV → mono → pad/trim → mel db
-# ----------------------------------------------------------
+# Load WAV -> mono -> pad and trim -> mel db
 def load_wav_as_mel(path: Path, target_length: int = 160000):
     try:
         with AudioFile(str(path)) as f:
@@ -37,11 +33,11 @@ def load_wav_as_mel(path: Path, target_length: int = 160000):
 
     audio = torch.tensor(audio, dtype=torch.float32)
 
-    # stereo → mono
+    # stereo -> mono
     if audio.ndim == 2:
         audio = torch.mean(audio, dim=0, keepdim=True)
 
-    # pad/trim
+    # pad and trim
     if audio.size(1) > target_length:
         audio = audio[:, :target_length]
     else:
@@ -51,10 +47,7 @@ def load_wav_as_mel(path: Path, target_length: int = 160000):
     return mel.unsqueeze(0)
 
 
-# ----------------------------------------------------------
 # Parse true parameters from filename
-# e.g. clean_riff_000_drive80_tone60.wav
-# ----------------------------------------------------------
 def parse_filename(fname: str):
     pat = r"drive(\d+)_tone(\d+)"
     match = re.search(pat, fname)
@@ -66,9 +59,7 @@ def parse_filename(fname: str):
     return drive, tone
 
 
-# ----------------------------------------------------------
 # Main evaluation
-# ----------------------------------------------------------
 def evaluate(weights_path: Path):
 
     root = load_config()
@@ -77,7 +68,6 @@ def evaluate(weights_path: Path):
     if not distorted_dir.exists():
         raise FileNotFoundError(f"Missing distorted directory: {distorted_dir}")
 
-    # FILTER OUT macOS hidden files and empty files
     wav_files = [
         w for w in distorted_dir.glob("*.wav")
         if not w.name.startswith("._") and w.stat().st_size > 500
@@ -105,27 +95,24 @@ def evaluate(weights_path: Path):
         mel = load_wav_as_mel(wav)
 
         with torch.no_grad():
-            out = model(mel) * 10   # undo training normalization
-
+            out = model(mel) * 10   
         pred_drive, pred_tone = out[0].tolist()
         pred_vals.append((pred_drive, pred_tone))
 
-        # "Correct" prediction = within ±5
+        # "Correct" prediction = within +- 5
         is_correct = (
             abs(pred_drive - true_drive) <= 5 and
             abs(pred_tone - true_tone) <= 5
         )
         correct_list.append(1 if is_correct else 0)
-        predicted_correct_list.append(1)  # model always gives 1 prediction
+        predicted_correct_list.append(1) 
 
         print(f"{wav.name}")
         print(f"  True: drive={true_drive}, tone={true_tone}")
         print(f"  Pred: drive={pred_drive:.1f}, tone={pred_tone:.1f}")
         print(f"  Correct: {is_correct}\n")
 
-    # ------------------------------------------------------
-    # Metrics
-    # ------------------------------------------------------
+    # Stats
     true_drives = np.array([t[0] for t in true_vals])
     pred_drives = np.array([p[0] for p in pred_vals])
 
@@ -140,12 +127,10 @@ def evaluate(weights_path: Path):
 
     accuracy = sum(correct_list) / len(correct_list)
 
-    # Confusion matrix (0 = wrong, 1 = correct)
+    # Confusion matrix 
     cm = confusion_matrix(correct_list, correct_list)
 
-    # ------------------------------------------------------
     # Print report
-    # ------------------------------------------------------
     print("\n================= RESULTS =================")
     print(f"Samples Evaluated: {len(wav_files)}")
     print(f"Accuracy (±5 tolerance): {accuracy*100:.2f}%")
