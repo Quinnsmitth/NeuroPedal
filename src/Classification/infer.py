@@ -25,9 +25,7 @@ import numpy as np
 from melDataLoader import mel_spectrogram
 
 
-# ---------------------------
 # Helper: load model function
-# ---------------------------
 def load_model(weights_path: Path, num_outputs: int):
     """Load ResNet34 adapted for 1-channel mel input and load weights."""
     model = models.resnet34(weights=None)  # <-- match training architecture
@@ -59,9 +57,7 @@ def load_model(weights_path: Path, num_outputs: int):
     return model
 
 
-# ---------------------------
 # Helper: preprocess audio
-# ---------------------------
 def preprocess_audio(path: Path, cfg: dict):
     """Load WAV and return mel tensor shaped (1, 1, mel_bins, time)."""
     waveform, sr = torchaudio.load(str(path))  # waveform: (channels, samples)
@@ -99,9 +95,7 @@ def preprocess_audio(path: Path, cfg: dict):
     return mel.float()
 
 
-# ---------------------------
 # Helper: prediction logic
-# ---------------------------
 def run_prediction(model: torch.nn.Module, mel_tensor: torch.Tensor):
     with torch.no_grad():
         out = model(mel_tensor)
@@ -127,9 +121,8 @@ def run_prediction(model: torch.nn.Module, mel_tensor: torch.Tensor):
     return result
 
 
-# ---------------------------
+
 # PyQt5 GUI
-# ---------------------------
 class InferenceWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -179,9 +172,7 @@ class InferenceWindow(QWidget):
         self.output.setReadOnly(True)
         layout.addWidget(self.output, stretch=1)
 
-        # ----------------------------
         # Hardcoded config & model
-        # ----------------------------
         self.append_output("Loading model (hardcoded ResNet34)...")
         try:
             self.cfg = {
@@ -260,9 +251,7 @@ class InferenceWindow(QWidget):
         self.append_output("==================\n")
 
 
-# ---------------------------
 # Run the app
-# ---------------------------
 def main():
     app = QApplication(sys.argv)
     window = InferenceWindow()
