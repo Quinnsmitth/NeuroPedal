@@ -29,8 +29,13 @@ def train_model(
     lr: float = 1e-4,
     model_name: str = "resnet34",
 ):
+    print(torch.version.cuda)
+    print("torch.cuda.is_available:", torch.cuda.is_available())
+    print("torch.version.cuda:", torch.version.cuda)
+    print("torch.backends.cudnn.version:", torch.backends.cudnn.version())
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    print(torch.cuda.get_device_name(0))
+    print(f"Using device: {device}\n")
     # ---------- DATASET ----------
     dataset = GuitarPedalDataset(data_dir)
     total_size = len(dataset)

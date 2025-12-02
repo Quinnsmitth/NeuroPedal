@@ -22,8 +22,9 @@ print(f"Using soundfont: {soundfont}")
 
 def render_one(midi_path: Path, wav_path: Path):
     """Render a single MIDI file to WAV using FluidSynth."""
+    fluidsynth_path = r"D:\fluidsynth\bin\fluidsynth.exe"
     cmd = [
-        "fluidsynth",
+        fluidsynth_path,
         "-ni",
         "-o", "audio.driver=null",  # silent, offline render
         "-r", "44100",              # sample rate
