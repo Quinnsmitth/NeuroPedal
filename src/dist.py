@@ -1,7 +1,7 @@
 from select_path import load_config
 from pedalboard import load_plugin
 from pedalboard.io import AudioFile
-from pedal_init import initialize_plugin
+from pedal_init import initialize_plugin 
 import numpy as np
 import os
 from tqdm import tqdm  # progress bar
