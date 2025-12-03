@@ -4,29 +4,36 @@ import re
 import torch
 import numpy as np
 from pedalboard.io import AudioFile
-from select_path import load_config
 from melSpec import mel_spectrogram
 from model import PedalResNet
 from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
 
+# ----------------- PATH FIX -----------------
+# Make /src importable for select_path
+project_root = Path(__file__).resolve().parents[2]
+src_dir = project_root / "src"
+sys.path.insert(0, str(src_dir))
 
-# Load WAV -> mono -> pad and trim -> mel db
+from select_path import load_config
+# -------------------------------------------
+
+# ----------------- AUDIO PROCESSING -----------------
 def load_wav_as_mel(path: Path, target_length: int = 160000):
+    """Load WAV file, convert to mono, pad/trim, compute mel spectrogram."""
     try:
         with AudioFile(str(path)) as f:
             audio = f.read(f.frames)
-            sr = f.samplerate
     except Exception as e:
         raise RuntimeError(f"Could not read WAV: {path} ({e})")
 
     audio = torch.tensor(audio, dtype=torch.float32)
 
-    # stereo -> mono
+    # Convert stereo to mono
     if audio.ndim == 2:
         audio = torch.mean(audio, dim=0, keepdim=True)
 
-    # pad and trim
+    # Pad or trim
     if audio.size(1) > target_length:
         audio = audio[:, :target_length]
     else:
@@ -35,24 +42,24 @@ def load_wav_as_mel(path: Path, target_length: int = 160000):
     mel = mel_spectrogram(audio)
     return mel.unsqueeze(0)
 
-
-# Parse true parameters from filename
+# ----------------- FILENAME PARSING -----------------
 def parse_drive_tone(filename: str):
+    """Extract drive and tone values from filename."""
     parts = filename.split("_")
     drive = int([p for p in parts if p.startswith("drive")][0].replace("drive", ""))
     tone = int([p for p in parts if p.startswith("tone")][0].replace("tone", ""))
     return drive, tone
 
-
-# Main evaluation function
+# ----------------- MODEL EVALUATION -----------------
 def evaluate_model(weights_path: Path, distorted_dir: Path):
+    """Evaluate PedalResNet on all valid WAV files in distorted_dir."""
     print(f"Loading model: {weights_path}")
 
     model = PedalResNet(output_size=2, use_pretrained=False)
     model.load_weights(weights_path)
     model.eval()
 
-    wav_files = list(distorted_dir.glob("*.wav"))
+    wav_files = sorted(distorted_dir.glob("*.wav"))
     if not wav_files:
         raise FileNotFoundError(f"No WAV files found in {distorted_dir}")
 
@@ -63,7 +70,16 @@ def evaluate_model(weights_path: Path, distorted_dir: Path):
     print(f"\nEvaluating {len(wav_files)} files...\n")
 
     for f in tqdm(wav_files, desc="Evaluating"):
-        mel = load_wav_as_mel(f)
+        # Skip macOS dot-underscore files and hidden files
+        if f.name.startswith("._") or f.name.startswith("."):
+            continue
+
+        try:
+            mel = load_wav_as_mel(f)
+        except RuntimeError as e:
+            print(f"Skipping invalid WAV: {f.name} ({e})")
+            continue
+
         gt_drive, gt_tone = parse_drive_tone(f.stem)
 
         with torch.no_grad():
@@ -84,13 +100,17 @@ def evaluate_model(weights_path: Path, distorted_dir: Path):
         print(f"  Pred (raw)   : drive={drive_pred:.1f}, tone={tone_pred:.1f}")
         print(f"  Pred (rounded): drive={drive_pred_rounded}, tone={tone_pred_rounded}\n")
 
+    if count == 0:
+        print("No valid WAV files were processed.")
+        return None, None, None
+
     mean_drive_error = total_drive_error / count
     mean_tone_error = total_tone_error / count
     mean_total_error = (mean_drive_error + mean_tone_error) / 2
 
     # Print final results
     print("\n================= RESULTS =================")
-    print(f"Samples Evaluated: {len(wav_files)}")
+    print(f"Samples Evaluated: {count}")
     print("-------------------------------------------")
     print(f"Mean Drive Error: {mean_drive_error:.3f}")
     print(f"Mean Tone Error : {mean_tone_error:.3f}")
@@ -99,12 +119,11 @@ def evaluate_model(weights_path: Path, distorted_dir: Path):
 
     return mean_drive_error, mean_tone_error, mean_total_error
 
-
+# ----------------- MAIN -----------------
 if __name__ == "__main__":
-    root = load_config()  # USB root
+    root = load_config()  # USB or dataset root
     distorted_dir = root / "distorted"
 
-    project_root = Path(__file__).resolve().parents[2]
     weights_path = project_root / "weights" / "guitar_model_mel_36300_100.pth"
 
     evaluate_model(weights_path, distorted_dir)
