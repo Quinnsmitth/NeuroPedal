@@ -40,7 +40,7 @@ class PedalResNet(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         x shape: (B, 1, n_mels, time)
-        Returns: (B, 2) → [drive_norm, tone_norm] in the same scale as training.
+        Returns: (B, 2) > [drive_norm, tone_norm] in the same scale as training.
         If you trained with y/10, multiply predictions by 10 at inference.
         """
         return self.resnet(x)
@@ -50,7 +50,7 @@ class PedalResNet(nn.Module):
         Load weights saved from melTrain.py.
 
         Expects a state_dict from a plain ResNet34 with the same conv1/fc
-        modifications (i.e., keys like 'conv1.weight', 'layer1.0.conv1.weight', etc.).
+        modifications ( keys like 'conv1.weight', 'layer1.0.conv1.weight', etc.).
         """
         state = torch.load(path, map_location=map_location)
 
