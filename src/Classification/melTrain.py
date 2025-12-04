@@ -35,6 +35,9 @@ def train_model(
     print("torch.backends.cudnn.version:", torch.backends.cudnn.version())
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(torch.cuda.get_device_name(0))
+
+
+    
     print(f"Using device: {device}\n")
     # ---------- DATASET ----------
     dataset = GuitarPedalDataset(data_dir)
