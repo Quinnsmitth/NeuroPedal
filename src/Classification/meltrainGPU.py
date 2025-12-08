@@ -11,10 +11,6 @@ import torch
 torch.backends.cudnn.benchmark = True        # Auto-tune conv kernels
 torch.backends.cudnn.enabled = True          # Full cuDNN
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# ------------------------------------------------------------
-#  Fix Python path
-# ------------------------------------------------------------
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from torch.utils.data import DataLoader, random_split

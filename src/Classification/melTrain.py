@@ -1,16 +1,12 @@
-# src/Classification/melTrain.py
 import sys
 from pathlib import Path
 import warnings
-
-# Add /src directory to Python path BEFORE other imports
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
-from torchvision import models  # still used for resnet18 option if you keep it
+from torchvision import models 
 from tqdm import tqdm
 
 from melDataLoader import GuitarPedalDataset
@@ -39,7 +35,6 @@ def train_model(
 
     
     print(f"Using device: {device}\n")
-    # ---------- DATASET ----------
     dataset = GuitarPedalDataset(data_dir)
     total_size = len(dataset)
 
@@ -73,7 +68,6 @@ def train_model(
         num_workers=0,
     )
 
-    # ---------- MODEL ----------
     print(f"Training on {len(train_set)} samples for {num_epochs} epochs")
 
     if model_name == "resnet34":
@@ -81,7 +75,6 @@ def train_model(
     else:
         model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 
-    # Match inference architecture in model.PedalResNet
     model.conv1 = nn.Conv2d(
         1,
         64,
@@ -100,7 +93,6 @@ def train_model(
         optimizer, factor=0.5, patience=4
     )
 
-    # ---------- TRAIN LOOP ----------
     for epoch in range(num_epochs):
         model.train()
         train_loss = 0.0
@@ -117,7 +109,7 @@ def train_model(
             optimizer.zero_grad()
 
             outputs = model(x)
-            # Normalize targets to ~[0, 10] by dividing by 10
+            # Normalize targets to [0, 10] by dividing by 10
             loss = criterion(outputs, y / 10.0)
 
             loss.backward()
@@ -127,7 +119,6 @@ def train_model(
 
         avg_train_loss = train_loss / len(train_loader)
 
-        # ---------- VALIDATION LOOP ----------
         model.eval()
         val_loss = 0.0
 
@@ -150,7 +141,6 @@ def train_model(
             f"Train: {avg_train_loss:.6f} | Val: {avg_val_loss:.6f}"
         )
 
-    # ---------- TEST LOOP ----------
     model.eval()
     test_loss = 0.0
 
@@ -166,8 +156,7 @@ def train_model(
 
     print(f"\nFinal Test Loss: {test_loss / len(test_loader):.6f}")
 
-    # ---------- SAVE MODEL ----------
-    project_root = Path(__file__).resolve().parents[2]  # .../NeuroPedal
+    project_root = Path(__file__).resolve().parents[2]  
     weights_dir = project_root / "weights"
     weights_dir.mkdir(parents=True, exist_ok=True)
 
