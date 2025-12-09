@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import models 
 from tqdm import tqdm
 
-from melDataLoader import GuitarPedalDataset
+from melDataLoader import JerryGuitarPedalDataset
 from select_path import load_config
 
 # Suppress non-critical user warnings
@@ -59,7 +59,7 @@ def train_model(
 
     # Load full dataset
 
-    dataset = GuitarPedalDataset(data_dir)
+    dataset = JerryGuitarPedalDataset(data_dir)
     total_size = len(dataset)
 
     # Split dataset into training, validation, and test sets
