@@ -13,23 +13,18 @@ from PyQt5.QtWidgets import (
     QTextEdit, QHBoxLayout, QMessageBox
 )
 
-# ML libs
 import torch
 import torch.nn as nn
 from torchvision import models
 import torchaudio
 import numpy as np
 
-# Your project's functions
 from melDataLoader import mel_spectrogram
 
 
-# Helper: load model function
 def load_model(weights_path: Path, num_outputs: int):
-    """Load ResNet34 adapted for 1-channel mel input and load weights."""
-    model = models.resnet34(weights=None)  # <-- match training architecture
+    model = models.resnet34(weights=None)  
 
-    # Adapt first conv layer for 1-channel input
     old_conv = model.conv1
     model.conv1 = nn.Conv2d(
         in_channels=1,
@@ -40,38 +35,31 @@ def load_model(weights_path: Path, num_outputs: int):
         bias=False
     )
 
-    # Adapt final fully connected layer for 2 outputs
     model.fc = nn.Linear(model.fc.in_features, num_outputs)
 
-    # Load weights
     state = torch.load(str(weights_path), map_location="cpu")
     if isinstance(state, dict) and "model" in state and isinstance(state["model"], dict):
         state_dict = state["model"]
     else:
         state_dict = state
 
-    # Load state dict
     model.load_state_dict(state_dict)
     model.eval()
     return model
 
 
-# Helper: preprocess audio
 def preprocess_audio(path: Path, cfg: dict):
-    """Load WAV and return mel tensor shaped (1, 1, mel_bins, time)."""
-    waveform, sr = torchaudio.load(str(path))  # waveform: (channels, samples)
+    waveform, sr = torchaudio.load(str(path))  
 
-    # Convert to mono if stereo
     if waveform.shape[0] > 1:
-        waveform = waveform.mean(dim=0, keepdim=True)  # stereo → mono
+        waveform = waveform.mean(dim=0, keepdim=True)  
 
-    # Resample if needed
+    
     target_sr = cfg.get("sample_rate", None)
     if target_sr and sr != target_sr:
         waveform = torchaudio.functional.resample(waveform, orig_freq=sr, new_freq=target_sr)
         sr = target_sr
 
-    # Convert to mel spectrogram
     try:
         mel = mel_spectrogram(
             waveform,
@@ -83,7 +71,6 @@ def preprocess_audio(path: Path, cfg: dict):
     except TypeError:
         mel = mel_spectrogram(waveform)
 
-    # Ensure shape is (1, 1, mel_bins, time)
     if mel.ndim == 3:
         mel = mel.unsqueeze(0)
     elif mel.ndim == 2:
@@ -94,7 +81,6 @@ def preprocess_audio(path: Path, cfg: dict):
     return mel.float()
 
 
-# Helper: prediction logic
 def run_prediction(model: torch.nn.Module, mel_tensor: torch.Tensor):
     with torch.no_grad():
         out = model(mel_tensor)
@@ -104,14 +90,12 @@ def run_prediction(model: torch.nn.Module, mel_tensor: torch.Tensor):
 
     result = {}
     if outputs.size == 2:
-        # Regression: drive & tone
         drive, tone = float(outputs[0]) * 10.0, float(outputs[1]) * 10.0
         result["type"] = "regression"
         result["drive"] = int(round(drive))
         result["tone"] = int(round(tone))
         result["raw"] = [drive, tone]
     else:
-        # Classification (fallback)
         probs = torch.softmax(torch.from_numpy(outputs).unsqueeze(0), dim=1).numpy()[0]
         cls = int(np.argmax(probs))
         result["type"] = "classification"
@@ -121,7 +105,6 @@ def run_prediction(model: torch.nn.Module, mel_tensor: torch.Tensor):
 
 
 
-# PyQt5 GUI
 class InferenceWindow(QWidget):
     def __init__(self):
         super().__init__()
