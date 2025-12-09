@@ -6,7 +6,7 @@ import numpy as np
 from melSpec import mel_spectrogram
 
 # Custom PyTorch Dataset for guitar pedal audio
-class GuitarPedalDataset(Dataset):
+class JerryGuitarPedalDataset(Dataset):
     """
     Dataset for distorted WAV files whose filenames encode
     pedal settings (drive and tone), for example:
