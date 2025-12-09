@@ -18,7 +18,7 @@ class JerryGuitarPedalDataset(Dataset):
         label  : Tensor([drive, tone]) as floating-point values
     """
 
-    def __init__(self, data_dir, transform=None, target_length=160000):
+    def __init__(self, data_dir, transform=None, target_length=160000): #3.63 seconds if at 44.1k
         """
         arguments:
             data_dir: Directory containing distorted WAV files
