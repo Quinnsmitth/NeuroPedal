@@ -44,3 +44,11 @@ This project eliminates the time-consuming trial-and-error process of adjusting 
 
 ## Project Structure
 
+## Model Architecture
+
+- Base: ResNet34 (from torchvision)
+- Adaptations:
+- Conv1 changed to accept 1-channel Mel input
+- Fully connected layer outputs 2 regression values `[drive, tone]`
+- Loss function: SmoothL1Loss
+- Optimizer: Adam with learning rate scheduling

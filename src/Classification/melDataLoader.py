@@ -1,9 +1,8 @@
-# src/Classification/dataLoader.py
 import os
 import torch
 from torch.utils.data import Dataset
 from pedalboard.io import AudioFile
-import numpy as np  # (not strictly needed, but kept in case you add augments)
+import numpy as np  
 from melSpec import mel_spectrogram
 
 
@@ -19,7 +18,6 @@ class GuitarPedalDataset(Dataset):
     """
 
     def __init__(self, data_dir, transform=None, target_length=160000):
-        # 4 seconds at ~40kHz
         self.data_dir = data_dir
         self.transform = transform
         self.target_length = target_length
@@ -50,13 +48,12 @@ class GuitarPedalDataset(Dataset):
         file_path = os.path.join(self.data_dir, file_name)
 
         try:
-            # Use pedalboard for robust reading
             with AudioFile(file_path) as f:
                 audio = f.read(f.frames)
                 sr = f.samplerate
         except Exception as e:
             print(f"[WARN] Skipping unreadable file: {file_name} ({e})")
-            # Dummy fallback (shape roughly matching a typical mel)
+            # Dummy fallback shape roughly matching a typical mel
             return (
                 torch.zeros((1, 128, 313), dtype=torch.float32),
                 torch.tensor([0.0, 0.0], dtype=torch.float32),
@@ -65,17 +62,13 @@ class GuitarPedalDataset(Dataset):
         # Convert to tensor, mono, fixed length
         audio = torch.tensor(audio, dtype=torch.float32)
 
-        if audio.ndim == 2:  # (channels, N) → mono
+        if audio.ndim == 2:  # (channels, N) -> mono
             audio = torch.mean(audio, dim=0, keepdim=True)
 
         audio = self.pad_or_trim(audio)  # (1, target_length)
-
-        # Canonical mel spectrogram pipeline (shared with inference)
-        # NOTE: We use the default sample_rate inside mel_spectrogram (41000),
-        # matching your previous training code.
         mel_db = mel_spectrogram(audio)
 
-        # Parse drive / tone from filename
+        # Parse drive and tone from filename
         base = os.path.splitext(file_name)[0]
         parts = base.split("_")
         try:

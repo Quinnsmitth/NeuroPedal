@@ -1,4 +1,3 @@
-# gui_pyqt_infer.py
 import sys
 from pathlib import Path
 import traceback

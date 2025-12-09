@@ -9,16 +9,11 @@ from model import PedalResNet
 from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
 
-# ----------------- PATH FIX -----------------
-# Make /src importable for select_path
 project_root = Path(__file__).resolve().parents[2]
 src_dir = project_root / "src"
 sys.path.insert(0, str(src_dir))
 
 from select_path import load_config
-# -------------------------------------------
-
-# ----------------- AUDIO PROCESSING -----------------
 def load_wav_as_mel(path: Path, target_length: int = 160000):
     """Load WAV file, convert to mono, pad/trim, compute mel spectrogram."""
     try:
@@ -42,7 +37,6 @@ def load_wav_as_mel(path: Path, target_length: int = 160000):
     mel = mel_spectrogram(audio)
     return mel.unsqueeze(0)
 
-# ----------------- FILENAME PARSING -----------------
 def parse_drive_tone(filename: str):
     """Extract drive and tone values from filename."""
     parts = filename.split("_")
@@ -50,7 +44,6 @@ def parse_drive_tone(filename: str):
     tone = int([p for p in parts if p.startswith("tone")][0].replace("tone", ""))
     return drive, tone
 
-# ----------------- MODEL EVALUATION -----------------
 def evaluate_model(weights_path: Path, distorted_dir: Path):
     """Evaluate PedalResNet on all valid WAV files in distorted_dir."""
     print(f"Loading model: {weights_path}")
@@ -119,9 +112,8 @@ def evaluate_model(weights_path: Path, distorted_dir: Path):
 
     return mean_drive_error, mean_tone_error, mean_total_error
 
-# ----------------- MAIN -----------------
 if __name__ == "__main__":
-    root = load_config()  # USB or dataset root
+    root = load_config() 
     distorted_dir = root / "distorted"
 
     weights_path = project_root / "weights" / "guitar_model_mel_36300_100.pth"
