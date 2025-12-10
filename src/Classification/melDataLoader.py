@@ -88,7 +88,7 @@ class JerryGuitarPedalDataset(Dataset):
                 sr = f.samplerate
         except Exception as e:
             # Handle unreadable files gracefully
-            print(f"[WARN] Skipping unreadable file: {file_name} ({e})")
+            print(f"Skipping unreadable file: {file_name} ({e})")
 
             # Return a dummy sample to avoid crashing training
             return (
