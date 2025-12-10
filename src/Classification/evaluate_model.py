@@ -173,10 +173,7 @@ def evaluate_model(weights_path: Path, distorted_dir: Path):
 
     return mean_drive_error, mean_tone_error, mean_total_error
 
-# ---------------------------------------------------------
 # Script entry point
-# ---------------------------------------------------------
-
 if __name__ == "__main__":
     # Load project root directory from configuration
     root = load_config()
