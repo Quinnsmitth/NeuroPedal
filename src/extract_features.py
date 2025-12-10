@@ -58,7 +58,7 @@ for f in tqdm(all_files, desc="Extracting MFCC features"):
         rows.append([*mfcc_mean, drive, tone])
 
     except Exception as e:
-        print(f"[WARN] Skipping file {f}: {e}")
+        print(f"Skipping file {f}: {e}")
 
 # Save CSV
 columns = [f"mfcc_{i}" for i in range(13)] + ["drive", "tone"]
