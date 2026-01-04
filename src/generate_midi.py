@@ -1,5 +1,3 @@
-#src/generate_midi.py
-
 from mido import MidiFile, MidiTrack, Message, MetaMessage, bpm2tempo
 from pathlib import Path
 import random, json

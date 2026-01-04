@@ -1,5 +1,3 @@
-# src/extract_features.py
-
 import torch
 import torchaudio
 import pandas as pd

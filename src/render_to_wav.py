@@ -55,4 +55,4 @@ else:
         except Exception as e:
             print(f" Skipping {midi_file.name} due to error: {e}")
 
-print(f"\nFast WAV rendering complete ->  {wav_dir}")
+print(f"\nFast WAV rendering complete :  {wav_dir}")
