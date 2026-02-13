@@ -24,39 +24,50 @@ jobs:
             const webhookUrl = process.env.DISCORD_WEBHOOK;
             if (!webhookUrl) core.setFailed('DISCORD_WEBHOOK secret is not set');
 
+            // Default embed
             let embed = {
-              color: 0x0099ff, // Default blue
+              color: 0x0099ff, // Blue
               title: 'GitHub Event',
               description: 'No details available.',
               url: '',
               author: {
-                name: github.actor,
-                url: `https://github.com/${github.actor}`
+                name: github.actor || 'Unknown',
+                url: `https://github.com/${github.actor || ''}`,
+                icon_url: `https://github.com/${github.actor || 'github'}.png`
               },
               fields: [],
               timestamp: new Date().toISOString()
             };
 
+            // Handle Push Events
             if (github.event_name === 'push') {
               const commits = github.event.commits
-                .map(c => `**${c.author.name}**: ${c.message}`)
+                ?.map(c => `[\`${c.id.slice(0,7)}\`] **${c.author.name}**: ${c.message}`)
                 .join("\n") || 'No commit messages';
               embed.title = `Push to ${github.repository.full_name}`;
               embed.description = commits;
               embed.url = `https://github.com/${github.repository.full_name}/commits/${github.sha}`;
-            } else if (github.event_name === 'pull_request') {
+              embed.color = 0x00aaff; // light blue
+            }
+
+            // Handle Pull Requests
+            else if (github.event_name === 'pull_request') {
               const pr = github.event.pull_request;
               embed.title = `PR ${pr.action}: ${pr.title || 'No title'}`;
               embed.description = pr.body || 'No description';
               embed.url = pr.html_url;
               embed.fields.push(
                 { name: 'Author', value: pr.user.login || 'Unknown', inline: true },
-                { name: 'Branch', value: pr.head.ref || 'Unknown', inline: true }
+                { name: 'Branch', value: pr.head.ref || 'Unknown', inline: true },
+                { name: 'Merged', value: pr.merged ? 'Yes' : 'No', inline: true }
               );
               embed.color = pr.merged ? 0x00ff00 : 0xff9900; // green if merged, orange otherwise
-            } else if (github.event_name === 'issues') {
+            }
+
+            // Handle Issues
+            else if (github.event_name === 'issues') {
               const issue = github.event.issue;
-              embed.title = `Issue ${issue.action}: ${issue.title || 'No title'}`;
+              embed.title = `❗ Issue ${issue.action}: ${issue.title || 'No title'}`;
               embed.description = issue.body || 'No description';
               embed.url = issue.html_url;
               embed.fields.push(
@@ -66,11 +77,18 @@ jobs:
               embed.color = issue.state === 'closed' ? 0xff0000 : 0x0099ff;
             }
 
+            // Fallback: ensure at least title or description exists
+            if (!embed.title && !embed.description) {
+              embed.title = 'GitHub Event';
+              embed.description = 'No additional details.';
+            }
+
+            // Send to Discord
             try {
               await axios.post(webhookUrl, { embeds: [embed] });
-              console.log('Discord webhook sent successfully');
+              console.log('✅ Discord webhook sent successfully');
             } catch (err) {
-              core.setFailed(`Failed to send Discord webhook: ${err.response?.data || err.message}`);
+              core.setFailed(`❌ Failed to send Discord webhook: ${err.response?.data || err.message}`);
             }
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
