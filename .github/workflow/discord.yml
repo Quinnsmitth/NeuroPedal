@@ -1,0 +1,66 @@
+name: Discord Webhook Embed
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, closed, reopened]
+  issues:
+    types: [opened, closed, reopened]
+
+jobs:
+  discord-embed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send rich message to Discord
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const axios = require('axios');
+
+            const webhookUrl = process.env.DISCORD_WEBHOOK;
+
+            let embed = {
+              color: 0x0099ff, // Blue color, can change
+              title: '',
+              description: '',
+              url: '',
+              author: {
+                name: github.actor,
+                url: `https://github.com/${github.actor}`
+              },
+              fields: [],
+              timestamp: new Date().toISOString()
+            };
+
+            if (github.event_name === 'push') {
+              const commits = github.event.commits.map(c => `**${c.author.name}**: ${c.message}`).join("\n");
+              embed.title = `Push to ${github.repository}`;
+              embed.description = commits || 'No commit messages';
+              embed.url = `https://github.com/${github.repository}/commits/${github.sha}`;
+            } else if (github.event_name === 'pull_request') {
+              const pr = github.event.pull_request;
+              embed.title = `PR ${pr.action}: ${pr.title}`;
+              embed.url = pr.html_url;
+              embed.fields.push(
+                { name: 'Author', value: pr.user.login, inline: true },
+                { name: 'Branch', value: pr.head.ref, inline: true }
+              );
+              embed.color = pr.merged ? 0x00ff00 : 0xff9900; // green if merged, orange otherwise
+            } else if (github.event_name === 'issues') {
+              const issue = github.event.issue;
+              embed.title = `❗ Issue ${issue.action}: ${issue.title}`;
+              embed.url = issue.html_url;
+              embed.fields.push(
+                { name: 'Author', value: issue.user.login, inline: true },
+                { name: 'State', value: issue.state, inline: true }
+              );
+              embed.color = issue.state === 'closed' ? 0xff0000 : 0x0099ff;
+            }
+
+            // Send to Discord
+            await axios.post(webhookUrl, { embeds: [embed] });
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
