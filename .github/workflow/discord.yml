@@ -56,7 +56,7 @@ jobs:
               embed.color = pr.merged ? 0x00ff00 : 0xff9900; // green if merged, orange otherwise
             } else if (github.event_name === 'issues') {
               const issue = github.event.issue;
-              embed.title = `❗ Issue ${issue.action}: ${issue.title || 'No title'}`;
+              embed.title = `Issue ${issue.action}: ${issue.title || 'No title'}`;
               embed.description = issue.body || 'No description';
               embed.url = issue.html_url;
               embed.fields.push(
