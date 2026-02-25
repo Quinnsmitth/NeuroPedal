@@ -52,3 +52,8 @@ This project eliminates the time-consuming trial-and-error process of adjusting 
 - Fully connected layer outputs 2 regression values `[drive, tone]`
 - Loss function: SmoothL1Loss
 - Optimizer: Adam with learning rate scheduling
+
+## Setup
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
