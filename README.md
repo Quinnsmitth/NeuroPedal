@@ -38,7 +38,7 @@ This project eliminates the time-consuming trial-and-error process of adjusting 
 - GUI for easy drag-and-drop inference using PyQt5  
 - Preprocessing includes waveform padding/trimming, mono conversion, and normalized Mel spectrograms  
 - Training and inference pipelines fully implemented  
-- Works with any pedal compatible with `[drive, tone]` settings  
+- Works with any pedal compatible with `[drive, tone]` settings.  
 
 ---
 
